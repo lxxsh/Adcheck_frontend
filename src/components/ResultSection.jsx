@@ -1,7 +1,7 @@
 import SentenceAccordion from "./SentenceAccordion";
 
 function getStatusClass(label) {
-  if (label === "위험") return "danger";
+  if (label === "주의") return "danger";
   if (label === "의심") return "warning";
   if (label === "정상") return "safe";
   return "";
@@ -16,10 +16,18 @@ function ResultSection({ result }) {
         <div className="result-hero-left">
           <p className="section-eyebrow">RESULT</p>
           <h2 className="section-title">전체 분석 결과</h2>
+
           <div className={`status-pill large ${statusClass}`}>
             {result.overallResult}
           </div>
+
           <p className="result-summary">{result.summary}</p>
+
+          {result.isMock && (
+            <div className="mock-badge">
+              백엔드 서버가 꺼져 있어 데모 결과를 표시 중입니다
+            </div>
+          )}
         </div>
 
         <div className="score-card">

@@ -1,7 +1,7 @@
 import { useState } from "react";
 
 function getStatusClass(label) {
-  if (label === "위험") return "danger";
+  if (label === "주의") return "danger";
   if (label === "의심") return "warning";
   if (label === "정상") return "safe";
   return "";
@@ -37,22 +37,30 @@ function SentenceAccordion({ data }) {
             <div className="meta-box">
               <div className="detail-title small">키워드</div>
               <div className="tag-list">
-                {data.keywords.map((keyword, index) => (
-                  <span key={index} className="meta-tag">
-                    {keyword}
-                  </span>
-                ))}
+                {data.keywords.length > 0 ? (
+                  data.keywords.map((keyword, index) => (
+                    <span key={index} className="meta-tag">
+                      {keyword}
+                    </span>
+                  ))
+                ) : (
+                  <span className="meta-tag">키워드 없음</span>
+                )}
               </div>
             </div>
 
             <div className="meta-box">
               <div className="detail-title small">탐지 규칙</div>
               <div className="tag-list">
-                {data.rules.map((rule, index) => (
-                  <span key={index} className="meta-tag outline">
-                    {rule}
-                  </span>
-                ))}
+                {data.rules.length > 0 ? (
+                  data.rules.map((rule, index) => (
+                    <span key={index} className="meta-tag outline">
+                      {rule}
+                    </span>
+                  ))
+                ) : (
+                  <span className="meta-tag outline">규칙 정보 없음</span>
+                )}
               </div>
             </div>
           </div>

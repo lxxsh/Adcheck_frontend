@@ -60,10 +60,7 @@ function AuthPage() {
       return;
     }
 
-    if (
-      loginId === savedUser.id &&
-      loginPassword === savedUser.password
-    ) {
+    if (loginId === savedUser.id && loginPassword === savedUser.password) {
       localStorage.setItem("isLoggedIn", "true");
       localStorage.setItem("currentUser", JSON.stringify(savedUser));
       navigate("/service");
@@ -98,7 +95,7 @@ function AuthPage() {
             </div>
             <div className="auth-feature-item">
               <span className="auth-feature-dot"></span>
-              위험 / 의심 / 정상 결과 요약 제공
+              의심 / 주의 / 정상 결과 요약 제공
             </div>
             <div className="auth-feature-item">
               <span className="auth-feature-dot"></span>
