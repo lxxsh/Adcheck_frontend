@@ -1,23 +1,20 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { loginUser, registerUser } from "../utils/userStore";
 
 function AuthPage() {
   const navigate = useNavigate();
-
   const [activeTab, setActiveTab] = useState("login");
-
   const [loginId, setLoginId] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
-
   const [signupName, setSignupName] = useState("");
   const [signupId, setSignupId] = useState("");
   const [signupPassword, setSignupPassword] = useState("");
   const [signupPasswordCheck, setSignupPasswordCheck] = useState("");
-
   const [message, setMessage] = useState("");
 
-  const handleSignup = (e) => {
-    e.preventDefault();
+  const handleSignup = (event) => {
+    event.preventDefault();
 
     if (
       !signupName.trim() ||
@@ -25,52 +22,48 @@ function AuthPage() {
       !signupPassword.trim() ||
       !signupPasswordCheck.trim()
     ) {
-      setMessage("회원가입 정보를 모두 입력해주세요.");
+      setMessage("\uD68C\uC6D0\uAC00\uC785 \uC815\uBCF4\uB97C \uBAA8\uB450 \uC785\uB825\uD574\uC8FC\uC138\uC694.");
       return;
     }
 
     if (signupPassword !== signupPasswordCheck) {
-      setMessage("비밀번호 확인이 일치하지 않습니다.");
+      setMessage("\uBE44\uBC00\uBC88\uD638 \uD655\uC778 \uAC12\uC774 \uC77C\uCE58\uD558\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4.");
       return;
     }
 
-    const user = {
-      name: signupName,
-      id: signupId,
-      password: signupPassword,
-    };
+    try {
+      registerUser({
+        name: signupName.trim(),
+        id: signupId.trim(),
+        password: signupPassword,
+      });
 
-    localStorage.setItem("mockUser", JSON.stringify(user));
-    setMessage("회원가입이 완료되었습니다. 로그인 해주세요.");
-    setActiveTab("login");
-
-    setSignupName("");
-    setSignupId("");
-    setSignupPassword("");
-    setSignupPasswordCheck("");
+      setMessage(
+        "\uD68C\uC6D0\uAC00\uC785\uC774 \uC644\uB8CC\uB418\uC5C8\uC2B5\uB2C8\uB2E4. \uB85C\uADF8\uC778\uD574\uC8FC\uC138\uC694."
+      );
+      setActiveTab("login");
+      setSignupName("");
+      setSignupId("");
+      setSignupPassword("");
+      setSignupPasswordCheck("");
+    } catch (error) {
+      setMessage(error.message);
+    }
   };
 
-  const handleLogin = (e) => {
-    e.preventDefault();
+  const handleLogin = (event) => {
+    event.preventDefault();
 
-    const savedUser = JSON.parse(localStorage.getItem("mockUser"));
+    const user = loginUser(loginId.trim(), loginPassword);
 
-    if (!savedUser) {
-      setMessage("가입된 계정이 없습니다. 먼저 회원가입을 진행해주세요.");
+    if (!user) {
+      setMessage(
+        "\uC544\uC774\uB514 \uB610\uB294 \uBE44\uBC00\uBC88\uD638\uAC00 \uC62C\uBC14\uB974\uC9C0 \uC54A\uC2B5\uB2C8\uB2E4."
+      );
       return;
     }
 
-    if (
-      loginId === savedUser.id &&
-      loginPassword === savedUser.password
-    ) {
-      localStorage.setItem("isLoggedIn", "true");
-      localStorage.setItem("currentUser", JSON.stringify(savedUser));
-      navigate("/service");
-      return;
-    }
-
-    setMessage("아이디 또는 비밀번호가 올바르지 않습니다.");
+    navigate("/service");
   };
 
   return (
@@ -82,27 +75,28 @@ function AuthPage() {
         <section className="auth-brand-panel">
           <div className="auth-brand-badge">AI Advertising Risk Analyzer</div>
           <h1 className="auth-brand-title">
-            허위·과장 광고를
+            {"\uD5C8\uC704\u00B7\uACFC\uC7A5 \uAD11\uACE0\uB97C"}
             <br />
-            더 똑똑하게 확인하세요
+            {"\uB354 \uBA85\uD655\uD558\uAC8C \uD655\uC778\uD558\uC138\uC694"}
           </h1>
           <p className="auth-brand-description">
-            광고 문구, URL, 이미지를 입력하면 허위·과장 가능성이 있는 표현을
-            탐지하고 이유를 함께 보여주는 분석 서비스입니다.
+            {
+              "\uAD11\uACE0 \uBB38\uAD6C, URL, \uC774\uBBF8\uC9C0\uB97C \uC785\uB825\uD558\uBA74 \uD5C8\uC704\u00B7\uACFC\uC7A5 \uAC00\uB2A5\uC131\uC774 \uC788\uB294 \uD45C\uD604\uC744 \uD0D0\uC9C0\uD558\uACE0 \uADFC\uAC70\uB97C \uD568\uAED8 \uBCF4\uC5EC\uC8FC\uB294 \uBD84\uC11D \uC11C\uBE44\uC2A4\uC785\uB2C8\uB2E4."
+            }
           </p>
 
           <div className="auth-feature-list">
             <div className="auth-feature-item">
               <span className="auth-feature-dot"></span>
-              광고 문구, URL, 이미지 분석 지원
+              {"\uAD11\uACE0 \uBB38\uAD6C, URL, \uC774\uBBF8\uC9C0 \uBD84\uC11D \uC9C0\uC6D0"}
             </div>
             <div className="auth-feature-item">
               <span className="auth-feature-dot"></span>
-              의심 / 주의 / 정상 결과 요약 제공
+              {"\uC758\uC2EC \uACB0\uACFC \uC694\uC57D\uACFC \uC0C1\uC138 \uADFC\uAC70 \uD655\uC778"}
             </div>
             <div className="auth-feature-item">
               <span className="auth-feature-dot"></span>
-              근거와 문장별 상세 설명 확인 가능
+              {"\uAC1C\uC778 \uAE30\uC900 \uBD84\uC11D \uC774\uB825 \uC800\uC7A5"}
             </div>
           </div>
         </section>
@@ -117,7 +111,7 @@ function AuthPage() {
                   setMessage("");
                 }}
               >
-                로그인
+                {"\uB85C\uADF8\uC778"}
               </button>
               <button
                 className={`auth-tab-button ${activeTab === "signup" ? "active" : ""}`}
@@ -126,16 +120,20 @@ function AuthPage() {
                   setMessage("");
                 }}
               >
-                회원가입
+                {"\uD68C\uC6D0\uAC00\uC785"}
               </button>
             </div>
 
             <div className="auth-form-header">
-              <h2>{activeTab === "login" ? "로그인" : "회원가입"}</h2>
+              <h2>
+                {activeTab === "login"
+                  ? "\uB85C\uADF8\uC778"
+                  : "\uD68C\uC6D0\uAC00\uC785"}
+              </h2>
               <p>
                 {activeTab === "login"
-                  ? "서비스를 이용하려면 로그인해주세요."
-                  : "새 계정을 만들고 서비스를 시작하세요."}
+                  ? "\uC11C\uBE44\uC2A4\uB97C \uC774\uC6A9\uD558\uB824\uBA74 \uB85C\uADF8\uC778\uD574\uC8FC\uC138\uC694."
+                  : "\uC0C8 \uACC4\uC815\uC744 \uB9CC\uB4E4\uACE0 \uC11C\uBE44\uC2A4\uB97C \uC2DC\uC791\uD574\uBCF4\uC138\uC694."}
               </p>
             </div>
 
@@ -144,73 +142,73 @@ function AuthPage() {
             {activeTab === "login" ? (
               <form className="auth-form" onSubmit={handleLogin}>
                 <div className="auth-input-group">
-                  <label>아이디</label>
+                  <label>{"\uC544\uC774\uB514"}</label>
                   <input
                     type="text"
                     value={loginId}
                     onChange={(e) => setLoginId(e.target.value)}
-                    placeholder="아이디를 입력하세요"
+                    placeholder="\uC544\uC774\uB514\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694"
                   />
                 </div>
 
                 <div className="auth-input-group">
-                  <label>비밀번호</label>
+                  <label>{"\uBE44\uBC00\uBC88\uD638"}</label>
                   <input
                     type="password"
                     value={loginPassword}
                     onChange={(e) => setLoginPassword(e.target.value)}
-                    placeholder="비밀번호를 입력하세요"
+                    placeholder="\uBE44\uBC00\uBC88\uD638\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694"
                   />
                 </div>
 
                 <button type="submit" className="auth-submit-button">
-                  로그인
+                  {"\uB85C\uADF8\uC778"}
                 </button>
               </form>
             ) : (
               <form className="auth-form" onSubmit={handleSignup}>
                 <div className="auth-input-group">
-                  <label>이름</label>
+                  <label>{"\uC774\uB984"}</label>
                   <input
                     type="text"
                     value={signupName}
                     onChange={(e) => setSignupName(e.target.value)}
-                    placeholder="이름을 입력하세요"
+                    placeholder="\uC774\uB984\uC744 \uC785\uB825\uD574\uC8FC\uC138\uC694"
                   />
                 </div>
 
                 <div className="auth-input-group">
-                  <label>아이디</label>
+                  <label>{"\uC544\uC774\uB514"}</label>
                   <input
                     type="text"
                     value={signupId}
                     onChange={(e) => setSignupId(e.target.value)}
-                    placeholder="아이디를 입력하세요"
+                    placeholder="\uC544\uC774\uB514\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694"
                   />
                 </div>
 
                 <div className="auth-input-group">
-                  <label>비밀번호</label>
+                  <label>{"\uBE44\uBC00\uBC88\uD638"}</label>
                   <input
                     type="password"
                     value={signupPassword}
                     onChange={(e) => setSignupPassword(e.target.value)}
-                    placeholder="비밀번호를 입력하세요"
+                    placeholder="\uBE44\uBC00\uBC88\uD638\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694"
                   />
                 </div>
 
                 <div className="auth-input-group">
-                  <label>비밀번호 확인</label>
+                  <label>{"\uBE44\uBC00\uBC88\uD638 \uD655\uC778"}</label>
                   <input
                     type="password"
                     value={signupPasswordCheck}
                     onChange={(e) => setSignupPasswordCheck(e.target.value)}
-                    placeholder="비밀번호를 다시 입력하세요"
+                    placeholder="\uBE44\uBC00\uBC88\uD638\uB97C \uD55C \uBC88 \uB354 \uC785\uB825\uD574\uC8FC\uC138\uC694"
                   />
                 </div>
 
                 <button type="submit" className="auth-submit-button">
-                  회원가입
+                  {"\uD68C\uC6D0\uAC00\uC785"}
                 </button>
               </form>
             )}

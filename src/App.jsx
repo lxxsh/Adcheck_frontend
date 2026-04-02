@@ -1,5 +1,6 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import AuthPage from "./pages/AuthPage";
+import MyPage from "./pages/MyPage";
 import ServicePage from "./pages/ServicePage";
 import "./App.css";
 
@@ -33,6 +34,14 @@ function App() {
         element={
           <PrivateRoute>
             <ServicePage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/mypage"
+        element={
+          <PrivateRoute>
+            <MyPage />
           </PrivateRoute>
         }
       />

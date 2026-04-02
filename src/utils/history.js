@@ -1,10 +1,4 @@
-function getCurrentUser() {
-  try {
-    return JSON.parse(localStorage.getItem("currentUser")) || null;
-  } catch (error) {
-    return null;
-  }
-}
+import { getCurrentUser } from "./userStore";
 
 function getHistoryKey() {
   const currentUser = getCurrentUser();
