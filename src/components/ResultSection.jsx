@@ -1,0 +1,70 @@
+import SentenceAccordion from "./SentenceAccordion";
+
+function getStatusClass(label) {
+  if (label === "위험") return "danger";
+  if (label === "의심") return "warning";
+  if (label === "정상") return "safe";
+  return "";
+}
+
+function ResultSection({ result }) {
+  const statusClass = getStatusClass(result.overallResult);
+
+  return (
+    <section className="result-wrapper">
+      <div className={`glass-card result-hero ${statusClass}`}>
+        <div className="result-hero-left">
+          <p className="section-eyebrow">RESULT</p>
+          <h2 className="section-title">전체 분석 결과</h2>
+          <div className={`status-pill large ${statusClass}`}>
+            {result.overallResult}
+          </div>
+          <p className="result-summary">{result.summary}</p>
+        </div>
+
+        <div className="score-card">
+          <div className="score-label">의심도 점수</div>
+          <div className="score-value">{result.overallScore}</div>
+          <div className="score-unit">/ 100</div>
+        </div>
+      </div>
+
+      <div className="result-grid">
+        <div className="glass-card evidence-card">
+          <div className="section-header compact">
+            <div>
+              <p className="section-eyebrow">EVIDENCE</p>
+              <h3 className="subsection-title">핵심 근거 요약</h3>
+            </div>
+          </div>
+
+          <div className="evidence-list">
+            {result.evidences.map((evidence, index) => (
+              <div key={index} className="evidence-item">
+                <div className="evidence-dot"></div>
+                <p>{evidence}</p>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        <div className="glass-card sentence-card">
+          <div className="section-header compact">
+            <div>
+              <p className="section-eyebrow">DETAIL</p>
+              <h3 className="subsection-title">문장별 상세 분석</h3>
+            </div>
+          </div>
+
+          <div className="accordion-list">
+            {result.sentences.map((sentence, index) => (
+              <SentenceAccordion key={index} data={sentence} />
+            ))}
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
+export default ResultSection;
