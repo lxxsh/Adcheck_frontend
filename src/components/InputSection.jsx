@@ -2,14 +2,14 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import { analyzeImage, analyzeText, analyzeUrl } from "../api";
 import { transformResult } from "../utils/transform";
 
-const LABEL_SAFE = "\uC815\uC0C1";
-const LABEL_WARNING = "\uC758\uC2EC";
-const LABEL_DANGER = "\uC8FC\uC758";
+const LABEL_SAFE = "정상";
+const LABEL_CAUTION = "주의";
+const LABEL_SUSPICIOUS = "의심";
 
 const SUSPICION_PRIORITY = {
   [LABEL_SAFE]: 0,
-  [LABEL_WARNING]: 1,
-  [LABEL_DANGER]: 2,
+  [LABEL_CAUTION]: 1,
+  [LABEL_SUSPICIOUS]: 2,
 };
 
 function createImageItem(file) {
@@ -34,8 +34,7 @@ function combineImageResponses(results, images) {
     results.length;
 
   const sentenceResults = results.flatMap((item, index) => {
-    const imageName = images[index]?.file?.name || `\uC774\uBBF8\uC9C0 ${index + 1}`;
-
+    const imageName = images[index]?.file?.name || `이미지 ${index + 1}`;
     return Array.isArray(item.sentence_results)
       ? item.sentence_results.map((sentence) => ({
           ...sentence,
@@ -44,13 +43,11 @@ function combineImageResponses(results, images) {
       : [];
   });
 
-  const mockIncluded = results.some((item) => item.__mock);
   const riskyCount = results.filter(
     (item) => (item.overall_suspicion_level || LABEL_SAFE) !== LABEL_SAFE
   ).length;
 
   return {
-    __mock: mockIncluded,
     original_text: images.map((image) => image.file.name).join(", "),
     overall_suspicion_level: pickOverallSuspicion(
       results.map((item) => item.overall_suspicion_level || LABEL_SAFE)
@@ -59,11 +56,11 @@ function combineImageResponses(results, images) {
     sentence_results: sentenceResults,
     summary:
       images.length === 1
-        ? results[0]?.summary || "\uC774\uBBF8\uC9C0 \uBD84\uC11D \uACB0\uACFC\uC785\uB2C8\uB2E4."
-        : `${images.length}\uC7A5\uC758 \uC774\uBBF8\uC9C0\uB97C \uBAA8\uB450 \uBD84\uC11D\uD588\uC2B5\uB2C8\uB2E4. ${
+        ? results[0]?.summary || "이미지 분석 결과입니다."
+        : `${images.length}장의 이미지를 모두 분석했습니다. ${
             riskyCount > 0
-              ? `${riskyCount}\uC7A5\uC5D0\uC11C \uC8FC\uC758 \uB610\uB294 \uC758\uC2EC \uD45C\uD604\uC774 \uAC10\uC9C0\uB418\uC5C8\uC2B5\uB2C8\uB2E4.`
-              : "\uBAA8\uB4E0 \uC774\uBBF8\uC9C0\uC5D0\uC11C \uBE44\uAD50\uC801 \uC548\uC804\uD55C \uD45C\uD604\uC73C\uB85C \uBD84\uB958\uB418\uC5C8\uC2B5\uB2C8\uB2E4."
+              ? `${riskyCount}장에서 주의 또는 의심 표현이 감지되었습니다.`
+              : "모든 이미지에서 비교적 안전한 표현으로 분류되었습니다."
           }`,
   };
 }
@@ -89,13 +86,8 @@ function InputSection({ setResult, setLoading, onAnalysisComplete }) {
   const hasImages = useMemo(() => images.length > 0, [images]);
 
   const appendImages = (files) => {
-    if (!files.length) {
-      return;
-    }
-
-    const nextImages = files.map(createImageItem);
-
-    setImages((current) => [...current, ...nextImages]);
+    if (!files.length) return;
+    setImages((current) => [...current, ...files.map(createImageItem)]);
     setError("");
     setActiveTab("compose");
   };
@@ -103,10 +95,7 @@ function InputSection({ setResult, setLoading, onAnalysisComplete }) {
   const removeImage = (imageId) => {
     setImages((current) => {
       const target = current.find((image) => image.id === imageId);
-      if (target) {
-        URL.revokeObjectURL(target.preview);
-      }
-
+      if (target) URL.revokeObjectURL(target.preview);
       return current.filter((image) => image.id !== imageId);
     });
   };
@@ -117,44 +106,30 @@ function InputSection({ setResult, setLoading, onAnalysisComplete }) {
   };
 
   const getInputValue = () => {
-    if (activeTab === "url") {
-      return urlInput.trim();
-    }
-
-    if (hasImages) {
+    if (activeTab === "url") return urlInput.trim();
+    if (hasImages)
       return images.length > 1
         ? `${images[0].file.name} +${images.length - 1} more`
         : images[0].file.name;
-    }
-
     return textInput.trim();
   };
 
   const getHistoryInputType = () => {
-    if (activeTab === "url") {
-      return "url";
-    }
-
+    if (activeTab === "url") return "url";
     return hasImages ? "image" : "text";
   };
 
   const handleFileChange = (event) => {
-    const files = Array.from(event.target.files || []);
-    appendImages(files);
+    appendImages(Array.from(event.target.files || []));
     event.target.value = "";
   };
 
   const handleClipboardPaste = (event) => {
-    const clipboardItems = Array.from(event.clipboardData?.items || []);
-    const files = clipboardItems
+    const files = Array.from(event.clipboardData?.items || [])
       .filter((item) => item.type.startsWith("image/"))
       .map((item) => item.getAsFile())
       .filter(Boolean);
-
-    if (!files.length) {
-      return;
-    }
-
+    if (!files.length) return;
     event.preventDefault();
     appendImages(files);
   };
@@ -164,28 +139,21 @@ function InputSection({ setResult, setLoading, onAnalysisComplete }) {
       setError("");
 
       if (activeTab === "url" && !urlInput.trim()) {
-        setError("\uAD11\uACE0 URL\uC744 \uC785\uB825\uD574\uC8FC\uC138\uC694.");
+        setError("광고 URL을 입력해주세요.");
         return;
       }
-
       if (activeTab === "compose" && !textInput.trim() && !hasImages) {
-        setError(
-          "\uAD11\uACE0 \uBB38\uAD6C\uB97C \uC785\uB825\uD558\uAC70\uB098 \uC774\uBBF8\uC9C0\uB97C \uBD99\uC5EC\uB123\uAC70\uB098 \uC5C5\uB85C\uB4DC\uD574\uC8FC\uC138\uC694."
-        );
+        setError("광고 문구를 입력하거나 이미지를 업로드해주세요.");
         return;
       }
-
       if (activeTab === "compose" && textInput.trim() && hasImages) {
-        setError(
-          "\uD604\uC7AC\uB294 \uBB38\uAD6C\uC640 \uC774\uBBF8\uC9C0\uB97C \uB3D9\uC2DC\uC5D0 \uBD84\uC11D\uD560 \uC218 \uC5C6\uC5B4\uC694. \uD558\uB098\uB9CC \uC120\uD0DD\uD574\uC8FC\uC138\uC694."
-        );
+        setError("문구와 이미지를 동시에 분석할 수 없어요. 하나만 선택해주세요.");
         return;
       }
 
       setLoading(true);
 
       let response;
-
       if (activeTab === "url") {
         response = await analyzeUrl(urlInput.trim());
       } else if (hasImages) {
@@ -208,7 +176,7 @@ function InputSection({ setResult, setLoading, onAnalysisComplete }) {
         });
       }
     } catch (err) {
-      setError(err.message || "\uBD84\uC11D \uC911 \uC624\uB958\uAC00 \uBC1C\uC0DD\uD588\uC2B5\uB2C8\uB2E4.");
+      setError(err.message || "분석 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
     }
@@ -218,9 +186,7 @@ function InputSection({ setResult, setLoading, onAnalysisComplete }) {
     if (activeTab === "url") {
       return (
         <div className="input-panel">
-          <label className="input-label">
-            {"\uAD11\uACE0 URL \uC785\uB825"}
-          </label>
+          <label className="input-label">광고 URL 입력</label>
           <input
             className="text-input"
             type="text"
@@ -228,49 +194,30 @@ function InputSection({ setResult, setLoading, onAnalysisComplete }) {
             onChange={(e) => setUrlInput(e.target.value)}
             placeholder="https://example.com/product"
           />
-          <div className="input-hint">
-            {
-              "\uC0C1\uC138 \uD398\uC774\uC9C0\uB098 \uAD11\uACE0 \uB79C\uB529 \uD398\uC774\uC9C0 \uC8FC\uC18C\uB97C \uC785\uB825\uD574\uC8FC\uC138\uC694."
-            }
-          </div>
+          <div className="input-hint">상세 페이지나 광고 랜딩 페이지 주소를 입력해주세요.</div>
         </div>
       );
     }
 
     return (
       <div className="input-panel compose-panel" onPaste={handleClipboardPaste}>
-        <label className="input-label">
-          {"\uAD11\uACE0 \uBB38\uAD6C \uB610\uB294 \uC774\uBBF8\uC9C0"}
-        </label>
+        <label className="input-label">광고 문구 또는 이미지</label>
         <textarea
           className="text-area compose-text-area"
           value={textInput}
           onChange={(e) => setTextInput(e.target.value)}
-          placeholder={
-            "\uAD11\uACE0 \uBB38\uAD6C\uB97C \uC785\uB825\uD558\uAC70\uB098, \uD074\uB9BD\uBCF4\uB4DC\uC5D0 \uBCF5\uC0AC\uD55C \uC774\uBBF8\uC9C0\uB97C Ctrl+V\uB85C \uBC14\uB85C \uBD99\uC5EC\uB123\uC5B4 \uBCF4\uC138\uC694."
-          }
+          placeholder="광고 문구를 입력하거나, 클립보드에 복사한 이미지를 Ctrl+V로 바로 붙여넣어 보세요."
           rows={6}
         />
 
         <div className="compose-toolbar">
           <label className="attach-button">
-            {"\uC774\uBBF8\uC9C0 \uCD94\uAC00"}
-            <input
-              className="hidden-file"
-              type="file"
-              accept="image/*"
-              multiple
-              onChange={handleFileChange}
-            />
+            이미지 추가
+            <input className="hidden-file" type="file" accept="image/*" multiple onChange={handleFileChange} />
           </label>
-
           {images.length > 0 && (
-            <button
-              type="button"
-              className="attach-remove-button"
-              onClick={clearImages}
-            >
-              {"\uC804\uCCB4 \uC774\uBBF8\uC9C0 \uC81C\uAC70"}
+            <button type="button" className="attach-remove-button" onClick={clearImages}>
+              전체 이미지 제거
             </button>
           )}
         </div>
@@ -279,36 +226,22 @@ function InputSection({ setResult, setLoading, onAnalysisComplete }) {
           {images.length > 0 ? (
             <div className="image-gallery">
               <div className="image-gallery-header">
-                <div className="image-gallery-title">
-                  {`\uCCA8\uBD80\uB41C \uC774\uBBF8\uC9C0 ${images.length}\uC7A5`}
-                </div>
+                <div className="image-gallery-title">{`첨부된 이미지 ${images.length}장`}</div>
                 <div className="image-gallery-hint">
-                  {
-                    "\uCCA8\uBD80\uB41C \uC774\uBBF8\uC9C0\uB294 \uBAA8\uB450 \uBD84\uC11D\uD569\uB2C8\uB2E4. \uBD99\uC5EC\uB123\uAE30\uB098 \uCD94\uAC00 \uC120\uD0DD\uC73C\uB85C \uACC4\uC18D \uB204\uC801\uD560 \uC218 \uC788\uC5B4\uC694."
-                  }
+                  첨부된 이미지는 모두 분석합니다. 붙여넣기나 추가 선택으로 계속 누적할 수 있어요.
                 </div>
               </div>
-
               <div className="image-preview-grid">
                 {images.map((image) => (
                   <div key={image.id} className="image-thumb-card">
                     <div className="image-thumb-frame">
-                        <img
-                          className="image-thumb"
-                          src={image.preview}
-                          alt={image.file.name}
-                        />
+                      <img className="image-thumb" src={image.preview} alt={image.file.name} />
                     </div>
-
                     <div className="image-thumb-meta">
                       <div className="image-thumb-name">{image.file.name}</div>
                       <div className="image-thumb-actions">
-                        <button
-                          type="button"
-                          className="image-chip subtle"
-                          onClick={() => removeImage(image.id)}
-                        >
-                          {"\uC0AD\uC81C"}
+                        <button type="button" className="image-chip subtle" onClick={() => removeImage(image.id)}>
+                          삭제
                         </button>
                       </div>
                     </div>
@@ -319,24 +252,14 @@ function InputSection({ setResult, setLoading, onAnalysisComplete }) {
           ) : (
             <>
               <div className="upload-icon">+</div>
-              <div className="upload-text">
-                {
-                  "\uC774\uBBF8\uC9C0\uB97C \uC5EC\uB7EC \uC7A5 \uC5C5\uB85C\uB4DC\uD558\uAC70\uB098 \uD074\uB9BD\uBCF4\uB4DC\uC5D0\uC11C \uBC14\uB85C \uBD99\uC5EC\uB123\uC73C\uC138\uC694"
-                }
-              </div>
-              <div className="upload-subtext">
-                {
-                  "JPG, PNG \uC5EC\uB7EC \uC7A5 \uC120\uD0DD \uAC00\uB2A5, \uCEA1\uCC98 \uD6C4 Ctrl+V \uBD99\uC5EC\uB123\uAE30\uB3C4 \uC9C0\uC6D0\uD569\uB2C8\uB2E4"
-                }
-              </div>
+              <div className="upload-text">이미지를 여러 장 업로드하거나 클립보드에서 바로 붙여넣으세요</div>
+              <div className="upload-subtext">JPG, PNG 여러 장 선택 가능, 캡처 후 Ctrl+V 붙여넣기도 지원합니다</div>
             </>
           )}
         </div>
 
         <div className="input-hint">
-          {
-            "\uBB38\uAD6C\uB97C \uC785\uB825\uD558\uBA74 \uBB38\uAD6C \uBD84\uC11D, \uC774\uBBF8\uC9C0\uB97C \uCCA8\uBD80\uD558\uBA74 \uCCA8\uBD80\uB41C \uC774\uBBF8\uC9C0 \uC804\uBD80\uB97C \uC21C\uCC28 \uBD84\uC11D\uD569\uB2C8\uB2E4."
-          }
+          문구를 입력하면 문구 분석, 이미지를 첨부하면 첨부된 이미지 전부를 순차 분석합니다.
         </div>
       </div>
     );
@@ -347,27 +270,17 @@ function InputSection({ setResult, setLoading, onAnalysisComplete }) {
       <div className="section-header">
         <div>
           <p className="section-eyebrow">INPUT</p>
-          <h2 className="section-title">
-            {"\uAD11\uACE0 \uB0B4\uC6A9 \uC785\uB825"}
-          </h2>
+          <h2 className="section-title">광고 내용 입력</h2>
         </div>
-        <div className="section-chip">
-          {"\uBD84\uC11D \uD6C4 \uC790\uB3D9 \uC800\uC7A5"}
-        </div>
+        <div className="section-chip">분석 후 자동 저장</div>
       </div>
 
       <div className="tab-row">
-        <button
-          className={`tab-button ${activeTab === "compose" ? "active" : ""}`}
-          onClick={() => setActiveTab("compose")}
-        >
-          {"\uBB38\uAD6C/\uC774\uBBF8\uC9C0 \uC785\uB825"}
+        <button className={`tab-button ${activeTab === "compose" ? "active" : ""}`} onClick={() => setActiveTab("compose")}>
+          문구/이미지 입력
         </button>
-        <button
-          className={`tab-button ${activeTab === "url" ? "active" : ""}`}
-          onClick={() => setActiveTab("url")}
-        >
-          {"URL \uC785\uB825"}
+        <button className={`tab-button ${activeTab === "url" ? "active" : ""}`} onClick={() => setActiveTab("url")}>
+          URL 입력
         </button>
       </div>
 
@@ -377,7 +290,7 @@ function InputSection({ setResult, setLoading, onAnalysisComplete }) {
 
       <div className="action-row">
         <button className="analyze-button" onClick={handleAnalyze}>
-          {"\uBD84\uC11D \uC2DC\uC791\uD558\uAE30"}
+          분석 시작하기
         </button>
       </div>
     </section>
