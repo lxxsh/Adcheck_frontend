@@ -1,15 +1,15 @@
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { getCurrentUser, logoutUser } from "../utils/userStore";
+import { getCurrentNickname, logout } from "../api";
 
 function ServiceTopbar() {
   const navigate = useNavigate();
   const location = useLocation();
-  const currentUser = getCurrentUser();
+  const nickname = getCurrentNickname();
   const isServicePage = location.pathname === "/service";
   const isMyPage = location.pathname === "/mypage";
 
   const handleLogout = () => {
-    logoutUser();
+    logout();
     navigate("/auth");
   };
 
@@ -17,28 +17,26 @@ function ServiceTopbar() {
     <div className="service-topbar">
       <div className="service-topbar-left">
         <Link to="/service" className="service-logo-link">
-          <div className="service-logo">{"\uB531 \uAC78\uB838\uC5B4!"}</div>
+          <div className="service-logo">딱 걸렸어!</div>
         </Link>
         <div className="service-user-text">
-          {currentUser
-            ? `${currentUser.name}\uB2D8 \uD658\uC601\uD569\uB2C8\uB2E4`
-            : "\uD658\uC601\uD569\uB2C8\uB2E4"}
+          {nickname ? `${nickname}님 환영합니다` : "환영합니다"}
         </div>
       </div>
 
       <div className="service-topbar-actions">
         {!isServicePage && (
           <Link to="/service" className="service-secondary-link">
-            {"\uBA54\uC778"}
+            메인
           </Link>
         )}
         {!isMyPage && (
           <Link to="/mypage" className="service-secondary-link">
-            {"\uB9C8\uC774\uD398\uC774\uC9C0"}
+            마이페이지
           </Link>
         )}
         <button className="service-logout-button" onClick={handleLogout}>
-          {"\uB85C\uADF8\uC544\uC6C3"}
+          로그아웃
         </button>
       </div>
     </div>
