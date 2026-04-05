@@ -1106,4 +1106,19 @@ a {
     flex-direction: column;
     align-items: flex-start;
   }
+
+  .service-secondary-button {
+  border: none;
+  background: #f3f5f7;
+  color: #111827;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.service-secondary-button:hover {
+  opacity: 0.9;
+}
+
 }

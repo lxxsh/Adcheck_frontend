@@ -65,7 +65,12 @@ function combineImageResponses(results, images) {
   };
 }
 
-function InputSection({ setResult, setLoading, onAnalysisComplete }) {
+function InputSection({
+  setResult,
+  setLoading,
+  onAnalysisComplete,
+  loggedIn,
+}) {
   const [activeTab, setActiveTab] = useState("compose");
   const [textInput, setTextInput] = useState("");
   const [urlInput, setUrlInput] = useState("");
@@ -74,7 +79,7 @@ function InputSection({ setResult, setLoading, onAnalysisComplete }) {
   const imagesRef = useRef([]);
 
   useEffect(() => {
-    imagesRef.current = images;
+    imagesRef.current = images; 
   }, [images]);
 
   useEffect(() => {
@@ -129,7 +134,9 @@ function InputSection({ setResult, setLoading, onAnalysisComplete }) {
       .filter((item) => item.type.startsWith("image/"))
       .map((item) => item.getAsFile())
       .filter(Boolean);
+
     if (!files.length) return;
+
     event.preventDefault();
     appendImages(files);
   };
@@ -142,10 +149,12 @@ function InputSection({ setResult, setLoading, onAnalysisComplete }) {
         setError("광고 URL을 입력해주세요.");
         return;
       }
+
       if (activeTab === "compose" && !textInput.trim() && !hasImages) {
         setError("광고 문구를 입력하거나 이미지를 업로드해주세요.");
         return;
       }
+
       if (activeTab === "compose" && textInput.trim() && hasImages) {
         setError("문구와 이미지를 동시에 분석할 수 없어요. 하나만 선택해주세요.");
         return;
@@ -154,6 +163,7 @@ function InputSection({ setResult, setLoading, onAnalysisComplete }) {
       setLoading(true);
 
       let response;
+
       if (activeTab === "url") {
         response = await analyzeUrl(urlInput.trim());
       } else if (hasImages) {
@@ -194,7 +204,9 @@ function InputSection({ setResult, setLoading, onAnalysisComplete }) {
             onChange={(e) => setUrlInput(e.target.value)}
             placeholder="https://example.com/product"
           />
-          <div className="input-hint">상세 페이지나 광고 랜딩 페이지 주소를 입력해주세요.</div>
+          <div className="input-hint">
+            상세 페이지나 광고 랜딩 페이지 주소를 입력해주세요.
+          </div>
         </div>
       );
     }
@@ -213,34 +225,60 @@ function InputSection({ setResult, setLoading, onAnalysisComplete }) {
         <div className="compose-toolbar">
           <label className="attach-button">
             이미지 추가
-            <input className="hidden-file" type="file" accept="image/*" multiple onChange={handleFileChange} />
+            <input
+              className="hidden-file"
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleFileChange}
+            />
           </label>
+
           {images.length > 0 && (
-            <button type="button" className="attach-remove-button" onClick={clearImages}>
+            <button
+              type="button"
+              className="attach-remove-button"
+              onClick={clearImages}
+            >
               전체 이미지 제거
             </button>
           )}
         </div>
 
-        <div className={`upload-box compose-upload-box ${images.length > 0 ? "has-image" : ""}`}>
+        <div
+          className={`upload-box compose-upload-box ${
+            images.length > 0 ? "has-image" : ""
+          }`}
+        >
           {images.length > 0 ? (
             <div className="image-gallery">
               <div className="image-gallery-header">
                 <div className="image-gallery-title">{`첨부된 이미지 ${images.length}장`}</div>
                 <div className="image-gallery-hint">
-                  첨부된 이미지는 모두 분석합니다. 붙여넣기나 추가 선택으로 계속 누적할 수 있어요.
+                  첨부된 이미지는 모두 분석합니다. 붙여넣기나 추가 선택으로 계속
+                  누적할 수 있어요.
                 </div>
               </div>
+
               <div className="image-preview-grid">
                 {images.map((image) => (
                   <div key={image.id} className="image-thumb-card">
                     <div className="image-thumb-frame">
-                      <img className="image-thumb" src={image.preview} alt={image.file.name} />
+                      <img
+                        className="image-thumb"
+                        src={image.preview}
+                        alt={image.file.name}
+                      />
                     </div>
+
                     <div className="image-thumb-meta">
                       <div className="image-thumb-name">{image.file.name}</div>
                       <div className="image-thumb-actions">
-                        <button type="button" className="image-chip subtle" onClick={() => removeImage(image.id)}>
+                        <button
+                          type="button"
+                          className="image-chip subtle"
+                          onClick={() => removeImage(image.id)}
+                        >
                           삭제
                         </button>
                       </div>
@@ -252,14 +290,20 @@ function InputSection({ setResult, setLoading, onAnalysisComplete }) {
           ) : (
             <>
               <div className="upload-icon">+</div>
-              <div className="upload-text">이미지를 여러 장 업로드하거나 클립보드에서 바로 붙여넣으세요</div>
-              <div className="upload-subtext">JPG, PNG 여러 장 선택 가능, 캡처 후 Ctrl+V 붙여넣기도 지원합니다</div>
+              <div className="upload-text">
+                이미지를 여러 장 업로드하거나 클립보드에서 바로 붙여넣으세요
+              </div>
+              <div className="upload-subtext">
+                JPG, PNG 여러 장 선택 가능, 캡처 후 Ctrl+V 붙여넣기도
+                지원합니다
+              </div>
             </>
           )}
         </div>
 
         <div className="input-hint">
-          문구를 입력하면 문구 분석, 이미지를 첨부하면 첨부된 이미지 전부를 순차 분석합니다.
+          문구를 입력하면 문구 분석, 이미지를 첨부하면 첨부된 이미지 전부를
+          순차 분석합니다.
         </div>
       </div>
     );
@@ -272,14 +316,24 @@ function InputSection({ setResult, setLoading, onAnalysisComplete }) {
           <p className="section-eyebrow">INPUT</p>
           <h2 className="section-title">광고 내용 입력</h2>
         </div>
-        <div className="section-chip">분석 후 자동 저장</div>
+        <div className="section-chip">
+          {loggedIn
+            ? "분석 후 자동 저장"
+            : "비회원 분석 가능 · 로그인 시 기록 저장"}
+        </div>
       </div>
 
       <div className="tab-row">
-        <button className={`tab-button ${activeTab === "compose" ? "active" : ""}`} onClick={() => setActiveTab("compose")}>
+        <button
+          className={`tab-button ${activeTab === "compose" ? "active" : ""}`}
+          onClick={() => setActiveTab("compose")}
+        >
           문구/이미지 입력
         </button>
-        <button className={`tab-button ${activeTab === "url" ? "active" : ""}`} onClick={() => setActiveTab("url")}>
+        <button
+          className={`tab-button ${activeTab === "url" ? "active" : ""}`}
+          onClick={() => setActiveTab("url")}
+        >
           URL 입력
         </button>
       </div>
