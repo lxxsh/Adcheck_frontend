@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import InputSection from "../components/InputSection";
 import ResultSection from "../components/ResultSection";
 import HistorySection from "../components/HistorySection";
-import { getHistory } from "../api";
+import { getHistory, isLoggedIn } from "../api";
 import { transformResult } from "../utils/transform";
 
 // 백엔드 이력 항목 → 프론트 형식으로 변환
@@ -39,21 +39,30 @@ function Home() {
   const [history, setHistory] = useState([]);
   const [selectedHistoryId, setSelectedHistoryId] = useState(null);
 
-  // 마운트 시 백엔드에서 이력 불러오기
+  const loggedIn = isLoggedIn();
+
+  // 로그인한 사용자만 이력 불러오기
   useEffect(() => {
+    if (!loggedIn) {
+      setHistory([]);
+      setSelectedHistoryId(null);
+      return;
+    }
+
     getHistory({ page: 0, size: 20 })
       .then((data) => {
         const items = data.content || [];
         setHistory(items.map(transformHistoryItem));
       })
       .catch(() => {
-        // 비로그인이거나 서버 오류 시 빈 이력
         setHistory([]);
       });
-  }, []);
+  }, [loggedIn]);
 
-  const handleAnalysisComplete = (entry) => {
-    // 분석 완료 후 이력 새로고침
+  const handleAnalysisComplete = () => {
+    if (!loggedIn) return;
+
+    // 로그인한 경우에만 분석 완료 후 이력 새로고침
     getHistory({ page: 0, size: 20 })
       .then((data) => {
         const items = data.content || [];
@@ -77,6 +86,9 @@ function Home() {
 
   return (
     <div className="app-shell">
+      <div className="background-glow bg-glow-1"></div>
+      <div className="background-glow bg-glow-2"></div>
+
       <main className="page-container">
         <section className="hero-section">
           <div className="hero-badge">AI 광고 위험도 분석 서비스</div>
@@ -95,6 +107,7 @@ function Home() {
           setResult={setResult}
           setLoading={setLoading}
           onAnalysisComplete={handleAnalysisComplete}
+          loggedIn={loggedIn}
         />
 
         {loading && (
@@ -111,12 +124,14 @@ function Home() {
 
         {result && !loading && <ResultSection result={result} />}
 
-        <HistorySection
-          history={history}
-          selectedHistoryId={selectedHistoryId}
-          onSelectHistory={handleSelectHistory}
-          onClearHistory={handleClearHistory}
-        />
+        {loggedIn && (
+          <HistorySection
+            history={history}
+            selectedHistoryId={selectedHistoryId}
+            onSelectHistory={handleSelectHistory}
+            onClearHistory={handleClearHistory}
+          />
+        )}
       </main>
     </div>
   );
