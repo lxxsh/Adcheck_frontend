@@ -741,6 +741,33 @@ a {
   color: #667085;
 }
 
+.result-grid {
+  display: grid;
+  grid-template-columns: 0.95fr 1.25fr;
+  gap: 20px;
+}
+
+.evidence-item {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.evidence-item p {
+  margin: 0;
+  color: #475467;
+  line-height: 1.7;
+}
+
+.evidence-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: #00d4a7;
+  margin-top: 8px;
+  flex-shrink: 0;
+}
+
 .sentence-card {
   margin-top: 20px;
 }
@@ -1011,6 +1038,10 @@ a {
     gap: 16px;
   }
 
+  .result-grid {
+    grid-template-columns: 1fr;
+  }
+
   .result-hero {
     flex-direction: column;
     align-items: flex-start;
@@ -1075,4 +1106,19 @@ a {
     flex-direction: column;
     align-items: flex-start;
   }
+
+  .service-secondary-button {
+  border: none;
+  background: #f3f5f7;
+  color: #111827;
+  padding: 10px 16px;
+  border-radius: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.service-secondary-button:hover {
+  opacity: 0.9;
+}
+
 }
