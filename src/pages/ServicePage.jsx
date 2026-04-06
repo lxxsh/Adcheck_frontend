@@ -1,13 +1,13 @@
-import ServiceTopbar from "../components/ServiceTopbar";
-import Home from "./Home";
+  import ServiceTopbar from "../components/ServiceTopbar";
+  import Home from "./Home";
 
-function ServicePage() {
-  return (
-    <div>
-      <ServiceTopbar />
-      <Home />
-    </div>
-  );
-}
+  function ServicePage() {
+    return (
+      <div>
+        <ServiceTopbar />
+        <Home />
+      </div>
+    );
+  }
 
-export default ServicePage;
+  export default ServicePage;
