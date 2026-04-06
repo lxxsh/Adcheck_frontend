@@ -1,18 +1,27 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import InputSection from "../components/InputSection";
 import ResultSection from "../components/ResultSection";
 import HistorySection from "../components/HistorySection";
-import { getHistory, isLoggedIn } from "../api";
+import { getCurrentAccountKey, getHistory, isLoggedIn } from "../api";
 import { transformResult } from "../utils/transform";
+import {
+  appendLocalHistory,
+  clearLocalHistory,
+  getLocalHistory,
+  mergeHistory,
+  saveLocalHistory,
+} from "../utils/history";
 
 // 백엔드 이력 항목 → 프론트 형식으로 변환
 function transformHistoryItem(item) {
   let sentenceResults = [];
+
   try {
     sentenceResults = item.sentenceResultsJson
       ? JSON.parse(item.sentenceResultsJson)
       : [];
-  } catch (_) {
+  } catch (error) {
+    console.error("sentenceResultsJson 파싱 실패:", error);
     sentenceResults = [];
   }
 
@@ -25,11 +34,25 @@ function transformHistoryItem(item) {
   };
 
   return {
-    id: item.id,
+    id: item.id ?? `server-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     inputType: (item.inputType || "TEXT").toLowerCase(),
     inputValue: item.inputContent || "",
     createdAt: item.createdAt || new Date().toISOString(),
     result: transformResult(apiData),
+  };
+}
+
+function createHistoryItemFromAnalysis({
+  result,
+  inputType = "text",
+  inputValue = "",
+}) {
+  return {
+    id: `local-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+    inputType,
+    inputValue,
+    createdAt: new Date().toISOString(),
+    result,
   };
 }
 
@@ -40,37 +63,71 @@ function Home() {
   const [selectedHistoryId, setSelectedHistoryId] = useState(null);
 
   const loggedIn = isLoggedIn();
+  const accountKey = getCurrentAccountKey();
 
-  // 로그인한 사용자만 이력 불러오기
-  useEffect(() => {
-    if (!loggedIn) {
+  const fetchHistory = useCallback(async () => {
+    // 로그아웃 상태면 완전 초기화
+    if (!loggedIn || !accountKey) {
       setHistory([]);
       setSelectedHistoryId(null);
       return;
     }
 
-    getHistory({ page: 0, size: 20 })
-      .then((data) => {
-        const items = data.content || [];
-        setHistory(items.map(transformHistoryItem));
-      })
-      .catch(() => {
-        setHistory([]);
-      });
-  }, [loggedIn]);
+    const localItems = getLocalHistory(accountKey);
 
-  const handleAnalysisComplete = () => {
-    if (!loggedIn) return;
+    try {
+      const data = await getHistory({ page: 0, size: 20 });
 
-    // 로그인한 경우에만 분석 완료 후 이력 새로고침
-    getHistory({ page: 0, size: 20 })
-      .then((data) => {
-        const items = data.content || [];
-        const transformed = items.map(transformHistoryItem);
-        setHistory(transformed);
-        setSelectedHistoryId(transformed[0]?.id || null);
-      })
-      .catch(() => {});
+      const rawItems = Array.isArray(data)
+        ? data
+        : Array.isArray(data?.content)
+        ? data.content
+        : [];
+
+      const remoteItems = rawItems.map(transformHistoryItem);
+      const merged = mergeHistory(localItems, remoteItems);
+
+      setHistory(merged);
+      saveLocalHistory(accountKey, merged);
+      setSelectedHistoryId((prev) => prev ?? merged[0]?.id ?? null);
+    } catch (error) {
+      console.error("이력 불러오기 실패:", error);
+
+      // 백엔드 에러가 나도 같은 계정의 로컬 캐시는 보여줌
+      setHistory(localItems);
+      setSelectedHistoryId((prev) => prev ?? localItems[0]?.id ?? null);
+    }
+  }, [loggedIn, accountKey]);
+
+  useEffect(() => {
+    if (!loggedIn || !accountKey) {
+      setHistory([]);
+      setSelectedHistoryId(null);
+      return;
+    }
+
+    fetchHistory();
+  }, [loggedIn, accountKey, fetchHistory]);
+
+  const handleAnalysisComplete = async (analysisPayload) => {
+    if (!analysisPayload?.result) return;
+
+    // 로그인 안 했으면 기록 저장 안 함
+    if (!loggedIn || !accountKey) {
+      return;
+    }
+
+    const newItem = createHistoryItemFromAnalysis({
+      result: analysisPayload.result,
+      inputType: analysisPayload.inputType,
+      inputValue: analysisPayload.inputValue,
+    });
+
+    const nextLocalHistory = appendLocalHistory(accountKey, newItem);
+    setHistory(nextLocalHistory);
+    setSelectedHistoryId(newItem.id);
+
+    await fetchHistory();
   };
 
   const handleSelectHistory = (item) => {
@@ -79,7 +136,10 @@ function Home() {
   };
 
   const handleClearHistory = () => {
-    // 이력 삭제는 백엔드 미구현이므로 화면만 초기화
+    if (loggedIn && accountKey) {
+      clearLocalHistory(accountKey);
+    }
+
     setHistory([]);
     setSelectedHistoryId(null);
   };

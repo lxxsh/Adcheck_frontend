@@ -1,4 +1,8 @@
+import { useEffect, useMemo, useRef, useState } from "react";
 import { formatHistoryDate } from "../utils/history";
+
+const PAGE_SIZE = 10;
+const VISIBLE_BOX_HEIGHT = 360; // 대략 3개 카드 정도 보이는 높이
 
 function getStatusClass(label) {
   if (label === "주의") return "danger";
@@ -20,6 +24,45 @@ function HistorySection({
   onSelectHistory,
   onClearHistory,
 }) {
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const scrollRef = useRef(null);
+  const loadMoreRef = useRef(null);
+
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [history]);
+
+  const visibleHistory = useMemo(() => {
+    return history.slice(0, visibleCount);
+  }, [history, visibleCount]);
+
+  const hasMore = visibleCount < history.length;
+
+  useEffect(() => {
+    const root = scrollRef.current;
+    const target = loadMoreRef.current;
+
+    if (!root || !target || !hasMore) return;
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        const entry = entries[0];
+        if (!entry.isIntersecting) return;
+
+        setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, history.length));
+      },
+      {
+        root,
+        rootMargin: "0px 0px 120px 0px",
+        threshold: 0.1,
+      }
+    );
+
+    observer.observe(target);
+
+    return () => observer.disconnect();
+  }, [history.length, hasMore]);
+
   return (
     <section className="glass-card history-section">
       <div className="section-header compact">
@@ -38,9 +81,17 @@ function HistorySection({
           아직 저장된 분석 기록이 없습니다.
         </div>
       ) : (
-        <div className="history-list">
-          {history.map((item) => {
-            const statusClass = getStatusClass(item.result.overallResult);
+        <div
+          ref={scrollRef}
+          className="history-list"
+          style={{
+            maxHeight: `${VISIBLE_BOX_HEIGHT}px`,
+            overflowY: "auto",
+            paddingRight: "6px",
+          }}
+        >
+          {visibleHistory.map((item) => {
+            const statusClass = getStatusClass(item.result?.overallResult);
             const isSelected = selectedHistoryId === item.id;
 
             return (
@@ -60,7 +111,7 @@ function HistorySection({
                   </div>
 
                   <span className={`status-pill ${statusClass}`}>
-                    {item.result.overallResult}
+                    {item.result?.overallResult || "정상"}
                   </span>
                 </div>
 
@@ -69,11 +120,26 @@ function HistorySection({
                 </div>
 
                 <div className="history-summary">
-                  {item.result.summary}
+                  {item.result?.summary || "요약 없음"}
                 </div>
               </button>
             );
           })}
+
+          <div ref={loadMoreRef} style={{ height: "1px" }} />
+
+          {!hasMore && history.length > PAGE_SIZE && (
+            <div
+              style={{
+                textAlign: "center",
+                padding: "10px 0 4px",
+                fontSize: "12px",
+                color: "#7b8190",
+              }}
+            >
+              모든 기록을 불러왔습니다.
+            </div>
+          )}
         </div>
       )}
     </section>

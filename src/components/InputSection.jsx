@@ -79,7 +79,7 @@ function InputSection({
   const imagesRef = useRef([]);
 
   useEffect(() => {
-    imagesRef.current = images; 
+    imagesRef.current = images;
   }, [images]);
 
   useEffect(() => {
@@ -112,10 +112,11 @@ function InputSection({
 
   const getInputValue = () => {
     if (activeTab === "url") return urlInput.trim();
-    if (hasImages)
+    if (hasImages) {
       return images.length > 1
         ? `${images[0].file.name} +${images.length - 1} more`
         : images[0].file.name;
+    }
     return textInput.trim();
   };
 
