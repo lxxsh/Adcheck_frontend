@@ -16,21 +16,14 @@ function PublicRoute({ children }) {
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<Navigate to="/auth" replace />} />
+      <Route path="/" element={<ServicePage />} />
+      <Route path="/service" element={<ServicePage />} />
       <Route
         path="/auth"
         element={
           <PublicRoute>
             <AuthPage />
           </PublicRoute>
-        }
-      />
-      <Route
-        path="/service"
-        element={
-          <PrivateRoute>
-            <ServicePage />
-          </PrivateRoute>
         }
       />
       <Route
