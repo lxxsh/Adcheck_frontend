@@ -15,19 +15,27 @@ function ServiceTopbar() {
 
   const handleLogout = () => {
     logout();
-    navigate("/service");
   };
 
-  const handleMoveAuth = () => {
-    navigate("/auth");
+  const handleMoveAuth = (tab = "login") => {
+    navigate("/auth", { state: { tab } });
+  };
+
+  const handleMoveHome = () => {
+    if (isHomePage) {
+      window.location.href = "/";
+      return;
+    }
+
+    navigate("/");
   };
 
   return (
     <div className="service-topbar">
       <div className="service-topbar-left">
-        <Link to="/service" className="service-logo-link">
+        <button className="service-logo-link" onClick={handleMoveHome}>
           <div className="service-logo">딱 걸렸어!</div>
-        </Link>
+        </button>
         <div className="service-user-text">
           {loggedIn && nickname ? `${nickname}님 환영합니다` : "환영합니다"}
         </div>
@@ -35,7 +43,7 @@ function ServiceTopbar() {
 
       <div className="service-topbar-actions">
         {!isHomePage && (
-          <Link to="/service" className="service-secondary-link">
+          <Link to="/" className="service-secondary-link">
             메인
           </Link>
         )}
@@ -55,16 +63,16 @@ function ServiceTopbar() {
           <>
             {!isAuthPage && (
               <button
-                className="service-secondary-button"
-                onClick={handleMoveAuth}
+                className="service-secondary-button service-auth-action"
+                onClick={() => handleMoveAuth("login")}
               >
                 로그인
               </button>
             )}
             {!isAuthPage && (
               <button
-                className="service-logout-button"
-                onClick={handleMoveAuth}
+                className="service-logout-button service-auth-action"
+                onClick={() => handleMoveAuth("signup")}
               >
                 회원가입
               </button>

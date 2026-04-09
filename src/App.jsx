@@ -16,8 +16,7 @@ function PublicRoute({ children }) {
 function App() {
   return (
     <Routes>
-      <Route path="/" element={<ServicePage />} />
-      <Route path="/service" element={<ServicePage />} />
+      <Route path="/" element={<Navigate to="/service" replace />} />
       <Route
         path="/auth"
         element={
@@ -26,6 +25,7 @@ function App() {
           </PublicRoute>
         }
       />
+      <Route path="/service" element={<ServicePage />} />
       <Route
         path="/mypage"
         element={
@@ -39,3 +39,4 @@ function App() {
 }
 
 export default App;
+
