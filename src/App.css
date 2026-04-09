@@ -36,7 +36,7 @@ a {
 
 .auth-page {
   position: relative;
-  min-height: 100vh;
+  min-height: calc(100vh - 72px);
   overflow: hidden;
   background:
     radial-gradient(circle at top left, rgba(89, 119, 255, 0.12), transparent 25%),
@@ -70,7 +70,7 @@ a {
 .auth-layout {
   position: relative;
   z-index: 2;
-  min-height: 100vh;
+  min-height: calc(100vh - 72px);
   max-width: 1280px;
   margin: 0 auto;
   padding: 40px 24px;
@@ -221,6 +221,43 @@ a {
   border-color: #111827;
 }
 
+.auth-inline-row {
+  display: flex;
+  gap: 10px;
+  align-items: stretch;
+}
+
+.auth-inline-row input {
+  flex: 1;
+}
+
+.auth-inline-button {
+  height: 48px;
+  padding: 0 14px;
+  border-radius: 14px;
+  background: #eef2f7;
+  color: #111827;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.auth-inline-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.auth-inline-hint {
+  margin-top: 8px;
+  color: #667085;
+  font-size: 14px;
+}
+
+.auth-inline-hint.success {
+  color: #00a37a;
+  font-weight: 700;
+}
+
 .auth-submit-button {
   width: 100%;
   height: 50px;
@@ -264,6 +301,9 @@ a {
 .service-logo-link {
   display: inline-flex;
   align-items: center;
+  padding: 0;
+  background: transparent;
+  cursor: pointer;
 }
 
 .service-logo {
@@ -278,6 +318,7 @@ a {
 }
 
 .service-secondary-link,
+.service-secondary-button,
 .service-logout-button {
   height: 40px;
   padding: 0 16px;
@@ -287,10 +328,17 @@ a {
   align-items: center;
   justify-content: center;
   font-weight: 700;
+  font-size: 16px;
 }
 
-.service-secondary-link {
-  background: #eef2f7;
+.service-auth-action {
+  width: 92px;
+  flex: 0 0 92px;
+}
+
+.service-secondary-link,
+.service-secondary-button {
+  background: #e2e8f0;
   color: #111827;
 }
 
@@ -741,33 +789,6 @@ a {
   color: #667085;
 }
 
-.result-grid {
-  display: grid;
-  grid-template-columns: 0.95fr 1.25fr;
-  gap: 20px;
-}
-
-.evidence-item {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 12px;
-}
-
-.evidence-item p {
-  margin: 0;
-  color: #475467;
-  line-height: 1.7;
-}
-
-.evidence-dot {
-  width: 10px;
-  height: 10px;
-  border-radius: 999px;
-  background: #00d4a7;
-  margin-top: 8px;
-  flex-shrink: 0;
-}
-
 .sentence-card {
   margin-top: 20px;
 }
@@ -978,6 +999,17 @@ a {
   margin-top: 10px;
 }
 
+.mypage-password-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px;
+  margin-top: 24px;
+}
+
+.mypage-password-span {
+  grid-column: 1 / -1;
+}
+
 .mypage-meta-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -997,6 +1029,16 @@ a {
   color: #111827;
   font-weight: 700;
   line-height: 1.6;
+}
+
+.mypage-action-row {
+  display: flex;
+  justify-content: flex-end;
+}
+
+.mypage-submit-button {
+  width: auto;
+  min-width: 160px;
 }
 
 .status-pill {
@@ -1038,10 +1080,6 @@ a {
     gap: 16px;
   }
 
-  .result-grid {
-    grid-template-columns: 1fr;
-  }
-
   .result-hero {
     flex-direction: column;
     align-items: flex-start;
@@ -1058,6 +1096,16 @@ a {
 
   .mypage-meta-grid {
     grid-template-columns: 1fr;
+  }
+
+  .mypage-password-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 640px) {
+  .auth-inline-row {
+    flex-direction: column;
   }
 }
 
@@ -1102,23 +1150,18 @@ a {
     flex-wrap: wrap;
   }
 
+  .service-auth-action {
+    width: calc(50% - 5px);
+    flex: 1 1 calc(50% - 5px);
+  }
+
   .history-item-top {
     flex-direction: column;
     align-items: flex-start;
   }
 
-  .service-secondary-button {
-  border: none;
-  background: #f3f5f7;
-  color: #111827;
-  padding: 10px 16px;
-  border-radius: 12px;
-  font-weight: 600;
-  cursor: pointer;
 }
 
 .service-secondary-button:hover {
   opacity: 0.9;
-}
-
 }
