@@ -12,10 +12,11 @@ const SUSPICION_PRIORITY = {
   [LABEL_SUSPICIOUS]: 2,
 };
 
-function createImageItem(file) {
+function createImageItem(file, displayName) {
   return {
     id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
     file,
+    displayName,
     preview: URL.createObjectURL(file),
   };
 }
@@ -34,7 +35,7 @@ function combineImageResponses(results, images) {
     results.length;
 
   const sentenceResults = results.flatMap((item, index) => {
-    const imageName = images[index]?.file?.name || `이미지 ${index + 1}`;
+    const imageName = images[index]?.displayName || `Image${index + 1}`;
     return Array.isArray(item.sentence_results)
       ? item.sentence_results.map((sentence) => ({
           ...sentence,
@@ -48,7 +49,7 @@ function combineImageResponses(results, images) {
   ).length;
 
   return {
-    original_text: images.map((image) => image.file.name).join(", "),
+    original_text: images.map((image) => image.displayName).join(", "),
     overall_suspicion_level: pickOverallSuspicion(
       results.map((item) => item.overall_suspicion_level || LABEL_SAFE)
     ),
@@ -60,7 +61,7 @@ function combineImageResponses(results, images) {
         : `${images.length}장의 이미지를 모두 분석했습니다. ${
             riskyCount > 0
               ? `${riskyCount}장에서 주의 또는 의심 표현이 감지되었습니다.`
-              : "모든 이미지에서 비교적 안전한 표현으로 분류되었습니다."
+              : "모든 이미지가 비교적 안전한 표현으로 분류되었습니다."
           }`,
   };
 }
@@ -79,7 +80,7 @@ function InputSection({
   const imagesRef = useRef([]);
 
   useEffect(() => {
-    imagesRef.current = images; 
+    imagesRef.current = images;
   }, [images]);
 
   useEffect(() => {
@@ -92,7 +93,13 @@ function InputSection({
 
   const appendImages = (files) => {
     if (!files.length) return;
-    setImages((current) => [...current, ...files.map(createImageItem)]);
+
+    setImages((current) => [
+      ...current,
+      ...files.map((file, index) =>
+        createImageItem(file, `Image${current.length + index + 1}`)
+      ),
+    ]);
     setError("");
     setActiveTab("compose");
   };
@@ -112,10 +119,13 @@ function InputSection({
 
   const getInputValue = () => {
     if (activeTab === "url") return urlInput.trim();
-    if (hasImages)
+
+    if (hasImages) {
       return images.length > 1
-        ? `${images[0].file.name} +${images.length - 1} more`
-        : images[0].file.name;
+        ? `${images[0].displayName} +${images.length - 1} more`
+        : images[0].displayName;
+    }
+
     return textInput.trim();
   };
 
@@ -156,7 +166,7 @@ function InputSection({
       }
 
       if (activeTab === "compose" && textInput.trim() && hasImages) {
-        setError("문구와 이미지를 동시에 분석할 수 없어요. 하나만 선택해주세요.");
+        setError("문구와 이미지는 동시에 분석할 수 없습니다. 하나만 선택해주세요.");
         return;
       }
 
@@ -201,7 +211,7 @@ function InputSection({
             className="text-input"
             type="text"
             value={urlInput}
-            onChange={(e) => setUrlInput(e.target.value)}
+            onChange={(event) => setUrlInput(event.target.value)}
             placeholder="https://example.com/product"
           />
           <div className="input-hint">
@@ -217,8 +227,8 @@ function InputSection({
         <textarea
           className="text-area compose-text-area"
           value={textInput}
-          onChange={(e) => setTextInput(e.target.value)}
-          placeholder="광고 문구를 입력하거나, 클립보드에 복사한 이미지를 Ctrl+V로 바로 붙여넣어 보세요."
+          onChange={(event) => setTextInput(event.target.value)}
+          placeholder="광고 문구를 입력하거나 클립보드의 이미지를 Ctrl+V로 바로 붙여넣어 보세요."
           rows={6}
         />
 
@@ -255,8 +265,8 @@ function InputSection({
               <div className="image-gallery-header">
                 <div className="image-gallery-title">{`첨부된 이미지 ${images.length}장`}</div>
                 <div className="image-gallery-hint">
-                  첨부된 이미지는 모두 분석합니다. 붙여넣기나 추가 선택으로 계속
-                  누적할 수 있어요.
+                  첨부된 이미지는 모두 분석됩니다. 붙여넣기나 추가 선택으로 계속 누적할 수
+                  있습니다.
                 </div>
               </div>
 
@@ -267,19 +277,19 @@ function InputSection({
                       <img
                         className="image-thumb"
                         src={image.preview}
-                        alt={image.file.name}
+                        alt={image.displayName}
                       />
                     </div>
 
                     <div className="image-thumb-meta">
-                      <div className="image-thumb-name">{image.file.name}</div>
+                      <div className="image-thumb-name">{image.displayName}</div>
                       <div className="image-thumb-actions">
                         <button
                           type="button"
                           className="image-chip subtle"
                           onClick={() => removeImage(image.id)}
                         >
-                          삭제
+                          제거
                         </button>
                       </div>
                     </div>
@@ -291,19 +301,18 @@ function InputSection({
             <>
               <div className="upload-icon">+</div>
               <div className="upload-text">
-                이미지를 여러 장 업로드하거나 클립보드에서 바로 붙여넣으세요
+                이미지를 올려서 업로드하거나 클립보드에서 바로 붙여넣으세요
               </div>
               <div className="upload-subtext">
-                JPG, PNG 여러 장 선택 가능, 캡처 후 Ctrl+V 붙여넣기도
-                지원합니다
+                JPG, PNG 여러 장 선택 가능, 캡처 후 Ctrl+V 붙여넣기도 지원합니다
               </div>
             </>
           )}
         </div>
 
         <div className="input-hint">
-          문구를 입력하면 문구 분석, 이미지를 첨부하면 첨부된 이미지 전부를
-          순차 분석합니다.
+          문구를 입력하면 문구 분석, 이미지를 첨부하면 첨부한 이미지 전체를 순서대로
+          분석합니다.
         </div>
       </div>
     );
@@ -318,7 +327,7 @@ function InputSection({
         </div>
         <div className="section-chip">
           {loggedIn
-            ? "분석 후 자동 저장"
+            ? "분석 기록 자동 저장"
             : "비회원 분석 가능 · 로그인 시 기록 저장"}
         </div>
       </div>

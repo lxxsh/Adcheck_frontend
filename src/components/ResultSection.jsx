@@ -37,38 +37,18 @@ function ResultSection({ result }) {
         </div>
       </div>
 
-      <div className="result-grid">
-        <div className="glass-card evidence-card">
-          <div className="section-header compact">
-            <div>
-              <p className="section-eyebrow">EVIDENCE</p>
-              <h3 className="subsection-title">핵심 근거 요약</h3>
-            </div>
-          </div>
-
-          <div className="evidence-list">
-            {result.evidences.map((evidence, index) => (
-              <div key={index} className="evidence-item">
-                <div className="evidence-dot"></div>
-                <p>{evidence}</p>
-              </div>
-            ))}
+      <div className="glass-card sentence-card">
+        <div className="section-header compact">
+          <div>
+            <p className="section-eyebrow">DETAIL</p>
+            <h3 className="subsection-title">문장별 상세 분석</h3>
           </div>
         </div>
 
-        <div className="glass-card sentence-card">
-          <div className="section-header compact">
-            <div>
-              <p className="section-eyebrow">DETAIL</p>
-              <h3 className="subsection-title">문장별 상세 분석</h3>
-            </div>
-          </div>
-
-          <div className="accordion-list">
-            {result.sentences.map((sentence, index) => (
-              <SentenceAccordion key={index} data={sentence} />
-            ))}
-          </div>
+        <div className="accordion-list">
+          {result.sentences.map((sentence, index) => (
+            <SentenceAccordion key={index} data={sentence} />
+          ))}
         </div>
       </div>
     </section>
