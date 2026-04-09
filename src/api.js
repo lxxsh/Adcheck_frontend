@@ -1,7 +1,5 @@
 const BASE_URL = "/api";
 
-// ── 공통 헬퍼 ────────────────────────────────────────────────
-
 function getToken() {
   return localStorage.getItem("token") || null;
 }
@@ -27,9 +25,6 @@ async function handleResponse(res) {
   return data;
 }
 
-// ── 인증 API ────────────────────────────────────────────────
-// 쿠키/세션 말고 JWT만 쓰므로 credentials: "omit"
-
 export async function register({ email, password, nickname }) {
   const res = await fetch(`${BASE_URL}/register`, {
     method: "POST",
@@ -53,16 +48,51 @@ export async function login({ email, password }) {
   if (data.token) {
     localStorage.setItem("token", data.token);
     localStorage.setItem("nickname", data.nickname || "");
+    localStorage.setItem("email", email || "");
     localStorage.setItem("isLoggedIn", "true");
   }
 
   return data;
 }
 
+export async function sendEmailCode(email) {
+  const res = await fetch(`${BASE_URL}/email/send-code`, {
+    method: "POST",
+    credentials: "omit",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email }),
+  });
+  return handleResponse(res);
+}
+
+export async function verifyEmailCode({ email, code }) {
+  const res = await fetch(`${BASE_URL}/email/verify-code`, {
+    method: "POST",
+    credentials: "omit",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ email, code }),
+  });
+  return handleResponse(res);
+}
+
+export async function changePassword({ currentPassword = "", newPassword }) {
+  const res = await fetch(`${BASE_URL}/password/change`, {
+    method: "POST",
+    credentials: "omit",
+    headers: authHeaders({
+      "Content-Type": "application/json",
+    }),
+    body: JSON.stringify({ currentPassword, newPassword }),
+  });
+  return handleResponse(res);
+}
+
 export function logout() {
   localStorage.removeItem("token");
   localStorage.removeItem("nickname");
+  localStorage.removeItem("email");
   localStorage.removeItem("isLoggedIn");
+  window.location.href = "/";
 }
 
 export function getCurrentNickname() {
@@ -70,20 +100,26 @@ export function getCurrentNickname() {
   return nickname && nickname.trim() ? nickname : null;
 }
 
-export function isLoggedIn() {
-  return localStorage.getItem("isLoggedIn") === "true";
+export function getCurrentEmail() {
+  const email = localStorage.getItem("email");
+  return email && email.trim() ? email : null;
 }
 
-// ── 분석 API ────────────────────────────────────────────────
-// 비회원도 가능 + 쿠키/세션 전송 금지
+export function getCurrentAccountKey() {
+  return getCurrentEmail() || getCurrentNickname() || null;
+}
+
+export function isLoggedIn() {
+  return !!localStorage.getItem("token");
+}
 
 export async function analyzeText(content) {
   const res = await fetch(`${BASE_URL}/analyze/text`, {
     method: "POST",
     credentials: "omit",
-    headers: {
+    headers: authHeaders({
       "Content-Type": "application/json",
-    },
+    }),
     body: JSON.stringify({
       inputType: "text",
       content,
@@ -96,9 +132,9 @@ export async function analyzeUrl(content) {
   const res = await fetch(`${BASE_URL}/analyze/url`, {
     method: "POST",
     credentials: "omit",
-    headers: {
+    headers: authHeaders({
       "Content-Type": "application/json",
-    },
+    }),
     body: JSON.stringify({
       inputType: "url",
       content,
@@ -114,13 +150,11 @@ export async function analyzeImage(file) {
   const res = await fetch(`${BASE_URL}/analyze/image`, {
     method: "POST",
     credentials: "omit",
+    headers: authHeaders(),
     body: formData,
   });
   return handleResponse(res);
 }
-
-// ── 이력 API ────────────────────────────────────────────────
-// 로그인 사용자만 사용, 그래도 쿠키는 안 쓰고 JWT만 사용
 
 export async function getHistory({ page = 0, size = 10 } = {}) {
   const res = await fetch(`${BASE_URL}/history?page=${page}&size=${size}`, {
