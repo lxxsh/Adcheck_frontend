@@ -48,6 +48,21 @@ function combineImageResponses(results, images) {
     (item) => (item.overall_suspicion_level || LABEL_SAFE) !== LABEL_SAFE
   ).length;
 
+  const nonCosmeticCount = results.filter((item) =>
+    item.summary?.includes("화장품·뷰티 광고가 아닌")
+  ).length;
+
+  let summary;
+  if (images.length === 1) {
+    summary = results[0]?.summary || "이미지 분석 결과입니다.";
+  } else if (nonCosmeticCount === results.length) {
+    summary = "화장품·뷰티 광고가 아닌 것으로 판단됩니다. 본 서비스는 화장품 광고의 허위·과장 표현을 분석합니다.";
+  } else if (nonCosmeticCount > 0) {
+    summary = `${images.length}장 중 ${nonCosmeticCount}장은 화장품·뷰티 광고가 아닌 것으로 판단되었습니다. ${riskyCount > 0 ? `나머지 ${riskyCount}장에서 주의 또는 의심 표현이 감지되었습니다.` : "나머지 이미지는 비교적 안전한 표현으로 분류되었습니다."}`;
+  } else {
+    summary = `${images.length}장의 이미지를 모두 분석했습니다. ${riskyCount > 0 ? `${riskyCount}장에서 주의 또는 의심 표현이 감지되었습니다.` : "모든 이미지가 비교적 안전한 표현으로 분류되었습니다."}`;
+  }
+
   return {
     original_text: images.map((image) => image.displayName).join(", "),
     overall_suspicion_level: pickOverallSuspicion(
@@ -55,14 +70,7 @@ function combineImageResponses(results, images) {
     ),
     overall_score: Number.isFinite(overallScore) ? overallScore : 0,
     sentence_results: sentenceResults,
-    summary:
-      images.length === 1
-        ? results[0]?.summary || "이미지 분석 결과입니다."
-        : `${images.length}장의 이미지를 모두 분석했습니다. ${
-            riskyCount > 0
-              ? `${riskyCount}장에서 주의 또는 의심 표현이 감지되었습니다.`
-              : "모든 이미지가 비교적 안전한 표현으로 분류되었습니다."
-          }`,
+    summary,
   };
 }
 
