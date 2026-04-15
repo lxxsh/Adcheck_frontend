@@ -1055,12 +1055,12 @@ a {
 
 .danger {
   background: #ffe5e5;
-  color: #ff3b3b;
+  color: #ff9900;
 }
 
 .warning {
   background: #fff4d6;
-  color: #ff9900;
+  color: #ff3b3b;
 }
 
 .safe {
