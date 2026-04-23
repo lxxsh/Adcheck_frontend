@@ -7,11 +7,33 @@ function getStatusClass(label) {
   return "";
 }
 
-function ResultSection({ result }) {
+function ResultSection({ result, source = "analysis", onNewAnalysis }) {
   const statusClass = getStatusClass(result.overallResult);
+  const isHistoryResult = source === "history";
 
   return (
     <section className="result-wrapper">
+      <div className="result-context-row">
+        <div>
+          <p className="section-eyebrow">
+            {isHistoryResult ? "HISTORY RESULT" : "CURRENT RESULT"}
+          </p>
+          <h2 className="section-title">
+            {isHistoryResult ? "선택한 기록의 분석 결과" : "분석 결과"}
+          </h2>
+        </div>
+
+        {onNewAnalysis && (
+          <button
+            type="button"
+            className="result-reset-button"
+            onClick={onNewAnalysis}
+          >
+            새로 분석하기
+          </button>
+        )}
+      </div>
+
       <div className={`glass-card result-hero ${statusClass}`}>
         <div className="result-hero-left">
           <p className="section-eyebrow">RESULT</p>

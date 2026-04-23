@@ -737,8 +737,33 @@ a {
   line-height: 1.6;
 }
 
+.result-scroll-anchor {
+  scroll-margin-top: 88px;
+}
+
 .result-wrapper {
   margin-top: 30px;
+  scroll-margin-top: 88px;
+}
+
+.result-context-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 16px;
+}
+
+.result-reset-button {
+  padding: 10px 14px;
+  border-radius: 12px;
+  background: #ffffff;
+  color: #111827;
+  border: 1px solid #d0d5dd;
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 800;
+  box-shadow: 0 10px 24px rgba(17, 24, 39, 0.05);
 }
 
 .result-hero {
@@ -914,12 +939,30 @@ a {
   font-weight: 700;
 }
 
+.history-count {
+  margin: 8px 0 0;
+  color: #667085;
+  font-size: 13px;
+  font-weight: 600;
+}
+
 .history-empty-box {
   padding: 20px;
   border-radius: 16px;
   background: #fafafa;
   border: 1px solid #eeeeee;
   color: #667085;
+}
+
+.history-error-box {
+  margin-bottom: 14px;
+  padding: 12px 14px;
+  border-radius: 14px;
+  background: #fff1f1;
+  color: #d92d20;
+  border: 1px solid #fecdca;
+  font-size: 14px;
+  font-weight: 700;
 }
 
 .history-list {
@@ -929,18 +972,57 @@ a {
 }
 
 .history-item {
+  position: relative;
   width: 100%;
-  padding: 16px;
   border-radius: 16px;
   background: #fafafa;
   border: 1px solid #eeeeee;
-  cursor: pointer;
-  text-align: left;
+  transition:
+    border-color 0.2s ease,
+    background-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.history-item:hover {
+  border-color: #cbd5e1;
+  background: #ffffff;
+  transform: translateY(-1px);
+  box-shadow: 0 14px 28px rgba(17, 24, 39, 0.06);
 }
 
 .history-item.selected {
   border-color: #111827;
   background: #f5f7fa;
+  box-shadow: inset 4px 0 0 #111827;
+}
+
+.history-item-main {
+  width: 100%;
+  padding: 16px 54px 16px 16px;
+  background: transparent;
+  cursor: pointer;
+  text-align: left;
+}
+
+.history-delete-button {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  width: 32px;
+  height: 32px;
+  border-radius: 999px;
+  background: #eef2f7;
+  color: #475467;
+  cursor: pointer;
+  font-size: 20px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.history-delete-button:hover {
+  background: #111827;
+  color: #ffffff;
 }
 
 .history-item-top {
@@ -957,6 +1039,13 @@ a {
   flex-wrap: wrap;
 }
 
+.history-index {
+  min-width: 24px;
+  color: #475467;
+  font-weight: 800;
+  font-size: 15px;
+}
+
 .history-type-badge {
   padding: 6px 10px;
   border-radius: 999px;
@@ -971,11 +1060,41 @@ a {
   font-size: 13px;
 }
 
+.history-arrow {
+  color: #111827;
+  font-size: 30px;
+  line-height: 1;
+}
+
+.history-preview-label {
+  margin-top: 14px;
+  color: #667085;
+  font-size: 12px;
+  font-weight: 800;
+}
+
 .history-preview {
-  margin-top: 12px;
+  display: -webkit-box;
+  margin-top: 6px;
+  overflow: hidden;
   font-weight: 700;
   color: #111827;
   line-height: 1.6;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+
+.history-result-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-top: 8px;
+}
+
+.history-score {
+  color: #667085;
+  font-size: 15px;
+  font-weight: 700;
 }
 
 .history-summary {
@@ -983,6 +1102,58 @@ a {
   color: #667085;
   line-height: 1.6;
   font-size: 14px;
+}
+
+.history-pagination {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-top: 18px;
+}
+
+.history-page-button {
+  min-width: 40px;
+  height: 40px;
+  padding: 0 12px;
+  border-radius: 12px;
+  background: #f3f4f6;
+  color: #475467;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+  border: 1px solid transparent;
+}
+
+.history-page-button.wide {
+  min-width: 58px;
+}
+
+.history-page-button.active {
+  background: #111827;
+  color: #ffffff;
+}
+
+.history-page-button:disabled {
+  cursor: not-allowed;
+  opacity: 0.45;
+}
+
+.history-page-button:not(:disabled):hover {
+  border-color: #cbd5e1;
+  background: #ffffff;
+}
+
+.history-page-button.active:hover {
+  background: #111827;
+  border-color: transparent;
+}
+
+.history-page-ellipsis {
+  color: #98a2b3;
+  font-weight: 800;
+  padding: 0 2px;
 }
 
 .mypage-card {
@@ -1084,6 +1255,10 @@ a {
     flex-direction: column;
     align-items: flex-start;
     gap: 18px;
+  }
+
+  .result-context-row {
+    flex-direction: column;
   }
 
   .score-card {

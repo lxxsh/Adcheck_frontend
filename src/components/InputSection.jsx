@@ -30,6 +30,10 @@ function pickOverallSuspicion(results) {
 }
 
 function combineImageResponses(results, images) {
+  const extractedTexts = results
+    .map((item) => item.original_text || item.extracted_text || "")
+    .filter((text) => text.trim());
+
   const overallScore =
     results.reduce((sum, item) => sum + (item.overall_score || 0), 0) /
     results.length;
@@ -49,7 +53,9 @@ function combineImageResponses(results, images) {
   ).length;
 
   return {
-    original_text: images.map((image) => image.displayName).join(", "),
+    original_text:
+      extractedTexts.join("\n") ||
+      images.map((image) => image.displayName).join(", "),
     overall_suspicion_level: pickOverallSuspicion(
       results.map((item) => item.overall_suspicion_level || LABEL_SAFE)
     ),
@@ -191,7 +197,10 @@ function InputSection({
       if (onAnalysisComplete) {
         onAnalysisComplete({
           inputType: getHistoryInputType(),
-          inputValue: getInputValue(),
+          inputValue:
+            getHistoryInputType() === "image"
+              ? transformed.originalText || getInputValue()
+              : getInputValue(),
           result: transformed,
         });
       }

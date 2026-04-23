@@ -19,10 +19,23 @@ async function handleResponse(res) {
     : {};
 
   if (!res.ok) {
-    throw new Error(data.error || data.detail || `요청 실패 (${res.status})`);
+    const error = new Error(data.error || data.detail || `요청 실패 (${res.status})`);
+    error.status = res.status;
+    throw error;
   }
 
   return data;
+}
+
+export function clearAuth() {
+  localStorage.removeItem("token");
+  localStorage.removeItem("nickname");
+  localStorage.removeItem("email");
+  localStorage.removeItem("isLoggedIn");
+}
+
+export function isAuthError(error) {
+  return error?.status === 401 || error?.status === 403;
 }
 
 export async function register({ email, password, nickname }) {
@@ -88,10 +101,7 @@ export async function changePassword({ currentPassword = "", newPassword }) {
 }
 
 export function logout() {
-  localStorage.removeItem("token");
-  localStorage.removeItem("nickname");
-  localStorage.removeItem("email");
-  localStorage.removeItem("isLoggedIn");
+  clearAuth();
   window.location.href = "/";
 }
 
@@ -146,6 +156,7 @@ export async function analyzeUrl(content) {
 export async function analyzeImage(file) {
   const formData = new FormData();
   formData.append("file", file);
+  formData.append("inputType", "image");
 
   const res = await fetch(`${BASE_URL}/analyze/image`, {
     method: "POST",
@@ -168,6 +179,24 @@ export async function getHistory({ page = 0, size = 10 } = {}) {
 export async function getHistoryById(id) {
   const res = await fetch(`${BASE_URL}/history/${id}`, {
     method: "GET",
+    credentials: "omit",
+    headers: authHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function deleteHistory() {
+  const res = await fetch(`${BASE_URL}/history`, {
+    method: "DELETE",
+    credentials: "omit",
+    headers: authHeaders(),
+  });
+  return handleResponse(res);
+}
+
+export async function deleteHistoryItem(id) {
+  const res = await fetch(`${BASE_URL}/history/${id}`, {
+    method: "DELETE",
     credentials: "omit",
     headers: authHeaders(),
   });
