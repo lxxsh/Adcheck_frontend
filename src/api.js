@@ -12,6 +12,10 @@ function authHeaders(extra = {}) {
   };
 }
 
+function publicHeaders(extra = {}) {
+  return { ...extra };
+}
+
 async function handleResponse(res) {
   const contentType = res.headers.get("content-type") || "";
   const data = contentType.includes("application/json")
@@ -124,32 +128,52 @@ export function isLoggedIn() {
 }
 
 export async function analyzeText(content) {
-  const res = await fetch(`${BASE_URL}/analyze/text`, {
+  const request = (headers) => fetch(`${BASE_URL}/analyze/text`, {
     method: "POST",
     credentials: "omit",
-    headers: authHeaders({
-      "Content-Type": "application/json",
-    }),
+    headers,
     body: JSON.stringify({
       inputType: "text",
       content,
     }),
   });
+
+  let res = await request(authHeaders({
+      "Content-Type": "application/json",
+    }));
+
+  if (res.status === 401 || res.status === 403) {
+    clearAuth();
+    res = await request(publicHeaders({
+      "Content-Type": "application/json",
+    }));
+  }
+
   return handleResponse(res);
 }
 
 export async function analyzeUrl(content) {
-  const res = await fetch(`${BASE_URL}/analyze/url`, {
+  const request = (headers) => fetch(`${BASE_URL}/analyze/url`, {
     method: "POST",
     credentials: "omit",
-    headers: authHeaders({
-      "Content-Type": "application/json",
-    }),
+    headers,
     body: JSON.stringify({
       inputType: "url",
       content,
     }),
   });
+
+  let res = await request(authHeaders({
+      "Content-Type": "application/json",
+    }));
+
+  if (res.status === 401 || res.status === 403) {
+    clearAuth();
+    res = await request(publicHeaders({
+      "Content-Type": "application/json",
+    }));
+  }
+
   return handleResponse(res);
 }
 
@@ -158,12 +182,20 @@ export async function analyzeImage(file) {
   formData.append("file", file);
   formData.append("inputType", "image");
 
-  const res = await fetch(`${BASE_URL}/analyze/image`, {
+  const request = (headers) => fetch(`${BASE_URL}/analyze/image`, {
     method: "POST",
     credentials: "omit",
-    headers: authHeaders(),
+    headers,
     body: formData,
   });
+
+  let res = await request(authHeaders());
+
+  if (res.status === 401 || res.status === 403) {
+    clearAuth();
+    res = await request(publicHeaders());
+  }
+
   return handleResponse(res);
 }
 
