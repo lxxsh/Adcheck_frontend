@@ -1,8 +1,8 @@
 import { useState } from "react";
 
 function getStatusClass(label) {
-  if (label === "주의") return "danger";
-  if (label === "의심") return "warning";
+  if (label === "주의") return "warning";
+  if (label === "의심") return "danger";
   if (label === "정상") return "safe";
   return "";
 }

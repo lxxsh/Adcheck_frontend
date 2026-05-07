@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useState } from "react";
 import InputSection from "../components/InputSection";
 import ResultSection from "../components/ResultSection";
 import HistorySection from "../components/HistorySection";
@@ -84,16 +84,6 @@ function Home() {
   const [selectedHistoryId, setSelectedHistoryId] = useState(null);
   const [resultSource, setResultSource] = useState("analysis");
   const [historyError, setHistoryError] = useState("");
-  const resultRef = useRef(null);
-
-  const scrollToResult = () => {
-    window.setTimeout(() => {
-      resultRef.current?.scrollIntoView({
-        behavior: "smooth",
-        block: "start",
-      });
-    }, 0);
-  };
 
   const handleAuthExpired = () => {
     clearAuth();
@@ -172,6 +162,18 @@ function Home() {
       });
   }, []);
 
+  useEffect(() => {
+    const shouldLockScroll = loading || Boolean(result);
+    if (!shouldLockScroll) return undefined;
+
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+
+    return () => {
+      document.body.style.overflow = previousOverflow;
+    };
+  }, [loading, result]);
+
   const handleAnalysisComplete = (entry) => {
     setResultSource("analysis");
 
@@ -212,7 +214,6 @@ function Home() {
     setSelectedHistoryId(item.id);
     setResultSource("history");
     setResult(item.result);
-    scrollToResult();
 
     if (!isLoggedIn() || String(item.id).startsWith("local-")) return;
 
@@ -306,6 +307,20 @@ function Home() {
     setResult(nextResult);
   };
 
+  const handleAnalysisStart = () => {
+    setResult(null);
+    setResultSource("analysis");
+  };
+
+  const closeResultModal = () => {
+    if (loading) return;
+    setResult(null);
+    if (resultSource === "history") {
+      setSelectedHistoryId(null);
+    }
+    setResultSource("analysis");
+  };
+
   const handleHistoryPageChange = (page) => {
     if (page < 0 || page >= historyTotalPages || page === historyPage) return;
     refreshHistory(page);
@@ -330,35 +345,10 @@ function Home() {
         <InputSection
           setResult={handleInputResult}
           setLoading={setLoading}
+          onAnalysisStart={handleAnalysisStart}
           onAnalysisComplete={handleAnalysisComplete}
           loggedIn={isLoggedIn()}
         />
-
-        {loading && (
-          <section className="glass-card loading-card">
-            <div className="loading-spinner"></div>
-            <div>
-              <h3 className="loading-title">광고 내용을 분석하고 있습니다</h3>
-              <p className="loading-description">
-                AI가 광고 문구를 분석 중입니다. 잠시만 기다려주세요.
-              </p>
-            </div>
-          </section>
-        )}
-
-        {result && !loading && (
-          <div ref={resultRef} className="result-scroll-anchor">
-            <ResultSection
-              result={result}
-              source={resultSource}
-              onNewAnalysis={() => {
-                setResult(null);
-                setSelectedHistoryId(null);
-                window.scrollTo({ top: 0, behavior: "smooth" });
-              }}
-            />
-          </div>
-        )}
 
         <HistorySection
           history={history}
@@ -374,6 +364,45 @@ function Home() {
           error={historyError}
         />
       </main>
+
+      {(loading || result) && (
+        <div className="result-modal-overlay" role="dialog" aria-modal="true">
+          <div className="result-modal">
+            <button
+              type="button"
+              className="result-modal-close"
+              onClick={closeResultModal}
+              disabled={loading}
+              aria-label="팝업 닫기"
+            >
+              ×
+            </button>
+
+            {loading ? (
+              <section className="loading-panel modal-loading-panel">
+                <div className="loading-spinner"></div>
+                <p className="loading-kicker">ANALYZING</p>
+                <h3 className="loading-title">광고 내용을 분석하고 있습니다...</h3>
+                <p className="loading-description">
+                  입력한 광고 내용을 검토하고 결과를 정리하는 중입니다.
+                </p>
+              </section>
+            ) : (
+              result && (
+                <div className="result-modal-body">
+                  <ResultSection
+                    result={result}
+                    source={resultSource}
+                    onNewAnalysis={
+                      resultSource === "analysis" ? closeResultModal : undefined
+                    }
+                  />
+                </div>
+              )
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
