@@ -14,6 +14,12 @@ import {
 import { transformResult } from "../utils/transform";
 
 const HISTORY_PAGE_SIZE = 5;
+const LOADING_MESSAGES = [
+  "문구를 분석하고 있습니다.",
+  "광고 표현의 위험도를 계산하고 있습니다.",
+  "어디까지나 위험도 분석일 뿐, 구매를 막으려는 판단은 아닙니다.",
+  "의심되는 표현과 근거를 정리하고 있습니다.",
+];
 
 function parseJsonArray(value) {
   if (Array.isArray(value)) return value;
@@ -47,7 +53,6 @@ function getResultOriginalText(item, inputType, fallbackText) {
   return item.extractedText || item.extracted_text || fallbackText;
 }
 
-// 백엔드 이력 항목을 프론트에서 쓰는 결과 형식으로 변환한다.
 function transformHistoryItem(item) {
   const sentenceResults = parseJsonArray(
     item.sentenceResultsJson || item.sentence_results_json || item.sentenceResults
@@ -84,6 +89,9 @@ function Home() {
   const [selectedHistoryId, setSelectedHistoryId] = useState(null);
   const [resultSource, setResultSource] = useState("analysis");
   const [historyError, setHistoryError] = useState("");
+  const [loadingProgress, setLoadingProgress] = useState(0);
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
+  const [analysisModalDismissed, setAnalysisModalDismissed] = useState(false);
 
   const handleAuthExpired = () => {
     clearAuth();
@@ -163,19 +171,36 @@ function Home() {
   }, []);
 
   useEffect(() => {
-    const shouldLockScroll = loading || Boolean(result);
-    if (!shouldLockScroll) return undefined;
+    if (!loading) {
+      setLoadingProgress(0);
+      setLoadingMessageIndex(0);
+      return;
+    }
 
-    const previousOverflow = document.body.style.overflow;
-    document.body.style.overflow = "hidden";
+    setLoadingProgress(8);
+    setAnalysisModalDismissed(false);
+
+    const progressTimer = window.setInterval(() => {
+      setLoadingProgress((current) => {
+        if (current >= 94) return current;
+        const step = current < 55 ? 8 : current < 82 ? 4 : 1;
+        return Math.min(current + step, 94);
+      });
+    }, 520);
+
+    const messageTimer = window.setInterval(() => {
+      setLoadingMessageIndex((current) => (current + 1) % LOADING_MESSAGES.length);
+    }, 2200);
 
     return () => {
-      document.body.style.overflow = previousOverflow;
+      window.clearInterval(progressTimer);
+      window.clearInterval(messageTimer);
     };
-  }, [loading, result]);
+  }, [loading]);
 
   const handleAnalysisComplete = (entry) => {
     setResultSource("analysis");
+    setAnalysisModalDismissed(false);
 
     if (!isLoggedIn()) return;
 
@@ -214,6 +239,7 @@ function Home() {
     setSelectedHistoryId(item.id);
     setResultSource("history");
     setResult(item.result);
+    setAnalysisModalDismissed(false);
 
     if (!isLoggedIn() || String(item.id).startsWith("local-")) return;
 
@@ -305,20 +331,7 @@ function Home() {
   const handleInputResult = (nextResult) => {
     setResultSource("analysis");
     setResult(nextResult);
-  };
-
-  const handleAnalysisStart = () => {
-    setResult(null);
-    setResultSource("analysis");
-  };
-
-  const closeResultModal = () => {
-    if (loading) return;
-    setResult(null);
-    if (resultSource === "history") {
-      setSelectedHistoryId(null);
-    }
-    setResultSource("analysis");
+    setAnalysisModalDismissed(false);
   };
 
   const handleHistoryPageChange = (page) => {
@@ -326,30 +339,156 @@ function Home() {
     refreshHistory(page);
   };
 
-  return (
-    <div className="app-shell">
-      <main className="page-container">
-        <section className="hero-section">
-          <div className="hero-badge">AI 광고 위험도 분석 서비스</div>
-          <h1 className="hero-title">
-            허위·과장 광고 의심도를
-            <br />
-            더 명확하게 분석하세요
-          </h1>
-          <p className="hero-description">
-            광고 문구, URL, 이미지 입력을 통해 허위·과장 가능성이 있는 표현을
-            탐지하고, 그 의심스러운 근거를 함께 확인할 수 있습니다.
-          </p>
-        </section>
+  const loggedIn = isLoggedIn();
+  const showAnalysisModal = (loading || result) && !analysisModalDismissed;
+  const closeAnalysisModal = () => {
+    setAnalysisModalDismissed(true);
+    if (!loading) {
+      setResult(null);
+      setSelectedHistoryId(null);
+      setResultSource("analysis");
+    }
+  };
 
+  return (
+    <main className="home-page">
+      <section className="hero-section">
+        <div className="hero-copy">
+          <div className="hero-badge">AI가 광고의 진실을 밝혀드립니다</div>
+
+          <h1 className="hero-title">
+            허위·과장 광고 의심도를<br />
+            더 <span>정확하게 분석</span>하세요
+          </h1>
+
+          <p className="hero-description">
+            광고 문구, URL, 이미지 입력을 통해 허위·과장 가능성이 있는 표현을 탐지하고,
+            그 의심스러운 근거를 함께 확인할 수 있습니다.
+          </p>
+
+          <div className="feature-row">
+            <div className="feature-item">
+              <strong>AI 기반 분석</strong>
+              <small>자연어 · 이미지 분석</small>
+            </div>
+            <div className="feature-item">
+              <strong>의심 근거 제시</strong>
+              <small>과장 · 허위 근거 제공</small>
+            </div>
+            <div className="feature-item">
+              <strong>직관적 위험도</strong>
+              <small>한눈에 보는 위험 점수</small>
+            </div>
+          </div>
+        </div>
+
+        <div className="hero-visual">
+          <div className="robot">
+            <div className="robot-antenna"></div>
+            <div className="robot-face"></div>
+            <div className="robot-glow"></div>
+            <div className="robot-magnifier"></div>
+          </div>
+
+          <div className="risk-card main-risk">
+            <p>광고 위험도</p>
+            <div className="gauge"></div>
+            <strong>72%</strong>
+            <span>위험도 높음</span>
+          </div>
+
+          <div className="risk-card result-card">
+            <p>주요 탐지 결과</p>
+            <ul>
+              <li><span className="dot red"></span>과장 표현 <b>근거 보기 ›</b></li>
+              <li><span className="dot orange"></span>근거 부족 <b>근거 보기 ›</b></li>
+              <li><span className="dot purple"></span>사실 확인 필요 <b>근거 보기 ›</b></li>
+            </ul>
+          </div>
+
+          <div className="risk-card compare-card">
+            <p>유사 광고 비교</p>
+            <div className="chart-line"></div>
+            <strong>68%</strong>
+          </div>
+        </div>
+      </section>
+
+      <section className="analysis-panel glass-card">
         <InputSection
           setResult={handleInputResult}
           setLoading={setLoading}
-          onAnalysisStart={handleAnalysisStart}
           onAnalysisComplete={handleAnalysisComplete}
-          loggedIn={isLoggedIn()}
+          loggedIn={loggedIn}
         />
+      </section>
 
+      {showAnalysisModal && (
+        <div className="analysis-modal-backdrop">
+          <section
+            className={`analysis-modal ${loading ? "is-loading" : "has-result"}`}
+            role="dialog"
+            aria-modal="true"
+            aria-label={loading ? "분석 진행 중" : "분석 결과"}
+          >
+            <button
+              type="button"
+              className="analysis-modal-close"
+              onClick={closeAnalysisModal}
+              aria-label="닫기"
+            >
+              ×
+            </button>
+
+            {loading ? (
+              <div className="modal-loading-panel">
+                <div className="loading-orbit" aria-hidden="true"></div>
+                <p className="modal-loading-eyebrow">ANALYZING</p>
+                <h3 className="modal-loading-title">광고 내용을 분석하고 있습니다...</h3>
+                <p className="modal-loading-copy">
+                  입력한 광고 내용을 검토하고 결과를 정리하는 중입니다.
+                </p>
+
+                <div
+                  className="loading-progress"
+                  role="progressbar"
+                  aria-valuemin="0"
+                  aria-valuemax="100"
+                  aria-valuenow={loadingProgress}
+                >
+                  <div
+                    className="loading-progress-fill"
+                    style={{ width: `${loadingProgress}%` }}
+                  ></div>
+                </div>
+
+                <div className="modal-loading-meta">
+                  <span>{LOADING_MESSAGES[loadingMessageIndex]}</span>
+                  <strong>{loadingProgress}%</strong>
+                </div>
+              </div>
+            ) : (
+              result && (
+                <div className="modal-result-panel">
+                  <ResultSection
+                    result={result}
+                    source={resultSource}
+                    onNewAnalysis={() => {
+                      setResult(null);
+                      setSelectedHistoryId(null);
+                      setResultSource("analysis");
+                      setAnalysisModalDismissed(true);
+                      window.scrollTo({ top: 0, behavior: "smooth" });
+                    }}
+                  />
+                </div>
+              )
+            )}
+          </section>
+        </div>
+      )}
+
+      {loggedIn && (
         <HistorySection
           history={history}
           selectedHistoryId={selectedHistoryId}
@@ -363,47 +502,8 @@ function Home() {
           onPageChange={handleHistoryPageChange}
           error={historyError}
         />
-      </main>
-
-      {(loading || result) && (
-        <div className="result-modal-overlay" role="dialog" aria-modal="true">
-          <div className="result-modal">
-            <button
-              type="button"
-              className="result-modal-close"
-              onClick={closeResultModal}
-              disabled={loading}
-              aria-label="팝업 닫기"
-            >
-              ×
-            </button>
-
-            {loading ? (
-              <section className="loading-panel modal-loading-panel">
-                <div className="loading-spinner"></div>
-                <p className="loading-kicker">ANALYZING</p>
-                <h3 className="loading-title">광고 내용을 분석하고 있습니다...</h3>
-                <p className="loading-description">
-                  입력한 광고 내용을 검토하고 결과를 정리하는 중입니다.
-                </p>
-              </section>
-            ) : (
-              result && (
-                <div className="result-modal-body">
-                  <ResultSection
-                    result={result}
-                    source={resultSource}
-                    onNewAnalysis={
-                      resultSource === "analysis" ? closeResultModal : undefined
-                    }
-                  />
-                </div>
-              )
-            )}
-          </div>
-        </div>
       )}
-    </div>
+    </main>
   );
 }
 
