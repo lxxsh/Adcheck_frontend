@@ -75,7 +75,6 @@ function combineImageResponses(results, images) {
 function InputSection({
   setResult,
   setLoading,
-  onAnalysisStart,
   onAnalysisComplete,
   loggedIn,
 }) {
@@ -84,7 +83,6 @@ function InputSection({
   const [urlInput, setUrlInput] = useState("");
   const [images, setImages] = useState([]);
   const [error, setError] = useState("");
-  const [submitting, setSubmitting] = useState(false);
   const imagesRef = useRef([]);
 
   useEffect(() => {
@@ -178,9 +176,7 @@ function InputSection({
         return;
       }
 
-      onAnalysisStart?.();
       setLoading(true);
-      setSubmitting(true);
 
       let response;
 
@@ -212,7 +208,6 @@ function InputSection({
       setError(err.message || "분석 중 오류가 발생했습니다.");
     } finally {
       setLoading(false);
-      setSubmitting(false);
     }
   };
 
@@ -366,12 +361,8 @@ function InputSection({
       {error && <div className="error-box">{error}</div>}
 
       <div className="action-row">
-        <button
-          className="analyze-button"
-          onClick={handleAnalyze}
-          disabled={submitting}
-        >
-          {submitting ? "분석 중..." : "분석 시작하기"}
+        <button className="analyze-button" onClick={handleAnalyze}>
+          분석 시작하기
         </button>
       </div>
     </section>
