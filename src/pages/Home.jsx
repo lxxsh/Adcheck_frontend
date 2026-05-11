@@ -89,7 +89,6 @@ function Home() {
   const [selectedHistoryId, setSelectedHistoryId] = useState(null);
   const [resultSource, setResultSource] = useState("analysis");
   const [historyError, setHistoryError] = useState("");
-  const [loadingProgress, setLoadingProgress] = useState(0);
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [analysisModalDismissed, setAnalysisModalDismissed] = useState(false);
 
@@ -171,29 +170,25 @@ function Home() {
   }, []);
 
   useEffect(() => {
+    const stateTimer = window.setTimeout(() => {
+      if (!loading) {
+        setLoadingMessageIndex(0);
+        return;
+      }
+
+      setAnalysisModalDismissed(false);
+    }, 0);
+
     if (!loading) {
-      setLoadingProgress(0);
-      setLoadingMessageIndex(0);
-      return;
+      return () => window.clearTimeout(stateTimer);
     }
-
-    setLoadingProgress(8);
-    setAnalysisModalDismissed(false);
-
-    const progressTimer = window.setInterval(() => {
-      setLoadingProgress((current) => {
-        if (current >= 94) return current;
-        const step = current < 55 ? 8 : current < 82 ? 4 : 1;
-        return Math.min(current + step, 94);
-      });
-    }, 520);
 
     const messageTimer = window.setInterval(() => {
       setLoadingMessageIndex((current) => (current + 1) % LOADING_MESSAGES.length);
     }, 2200);
 
     return () => {
-      window.clearInterval(progressTimer);
+      window.clearTimeout(stateTimer);
       window.clearInterval(messageTimer);
     };
   }, [loading]);
@@ -362,7 +357,7 @@ function Home() {
           </h1>
 
           <p className="hero-description">
-            광고 문구, URL, 이미지 입력을 통해 허위·과장 가능성이 있는 표현을 탐지하고,
+            광고 문구, URL, 이미지 입력을 통해 허위·과장 가능성이 있는 <span className="text-nowrap">표현을 탐지하고,</span>
             그 의심스러운 근거를 함께 확인할 수 있습니다.
           </p>
 
@@ -383,9 +378,20 @@ function Home() {
         </div>
 
         <div className="hero-visual">
-          <div className="robot">
-            <div className="robot-antenna"></div>
-            <div className="robot-face"></div>
+          <div className="robot" aria-hidden="true">
+            <div className="robot-shadow"></div>
+            <div className="robot-head">
+              <div className="robot-antenna"></div>
+              <div className="robot-face">
+                <span className="robot-eye left"></span>
+                <span className="robot-eye right"></span>
+                <span className="robot-mouth"></span>
+              </div>
+            </div>
+            <div className="robot-body">
+              <div className="robot-badge-light"></div>
+              <div className="robot-scan-line"></div>
+            </div>
             <div className="robot-glow"></div>
             <div className="robot-magnifier"></div>
           </div>
@@ -449,22 +455,8 @@ function Home() {
                   입력한 광고 내용을 검토하고 결과를 정리하는 중입니다.
                 </p>
 
-                <div
-                  className="loading-progress"
-                  role="progressbar"
-                  aria-valuemin="0"
-                  aria-valuemax="100"
-                  aria-valuenow={loadingProgress}
-                >
-                  <div
-                    className="loading-progress-fill"
-                    style={{ width: `${loadingProgress}%` }}
-                  ></div>
-                </div>
-
                 <div className="modal-loading-meta">
                   <span>{LOADING_MESSAGES[loadingMessageIndex]}</span>
-                  <strong>{loadingProgress}%</strong>
                 </div>
               </div>
             ) : (
