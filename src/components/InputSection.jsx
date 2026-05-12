@@ -77,6 +77,7 @@ function InputSection({
   setLoading,
   onAnalysisComplete,
   loggedIn,
+  resetSignal,
 }) {
   const [activeTab, setActiveTab] = useState("compose");
   const [textInput, setTextInput] = useState("");
@@ -94,6 +95,16 @@ function InputSection({
       imagesRef.current.forEach((image) => URL.revokeObjectURL(image.preview));
     };
   }, []);
+
+  useEffect(() => {
+    imagesRef.current.forEach((image) => URL.revokeObjectURL(image.preview));
+    imagesRef.current = [];
+    setImages([]);
+    setTextInput("");
+    setUrlInput("");
+    setError("");
+    setActiveTab("compose");
+  }, [resetSignal]);
 
   const hasImages = useMemo(() => images.length > 0, [images]);
 

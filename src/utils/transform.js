@@ -16,12 +16,11 @@ export function transformResult(apiData) {
           text: item.sentence || "",
           label: item.suspicion_level || "정상",
           reason: item.reason || "판단 이유 정보가 없습니다.",
+          detail: item.reason || "상세 설명 정보가 없습니다.",
           keywords: Array.isArray(item.matched_keywords)
             ? item.matched_keywords
             : [],
-          rules: Array.isArray(item.matched_patterns)
-            ? item.matched_patterns
-            : [],
+          rules: [],
         }))
       : [],
   };
