@@ -17,25 +17,6 @@ body {
   min-height: 100vh;
 }
 
-.service-scale-viewport {
-  min-height: 100vh;
-  overflow-x: hidden;
-  background: #f7f8fa;
-}
-
-.service-scale-canvas {
-  width: calc(100% / var(--service-scale, 1));
-  min-height: calc(100vh / var(--service-scale, 1));
-  zoom: var(--service-scale, 1);
-}
-
-@supports not (zoom: 1) {
-  .service-scale-canvas {
-    transform: scale(var(--service-scale, 1));
-    transform-origin: top center;
-  }
-}
-
 button,
 input,
 textarea {
