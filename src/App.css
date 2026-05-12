@@ -20,20 +20,35 @@ body {
 .service-scale-viewport {
   min-height: 100vh;
   overflow-x: hidden;
-  background: #f7f8fa;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(255, 255, 255, 0.10) 44%,
+      rgba(255, 255, 255, 0.35) 100%
+    ),
+    url("/hero-bg.png") center top / cover no-repeat,
+    #f7f8fa;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: stretch;
+}
+
+.service-scale-stage {
+  width: 100%;
+  min-height: calc(100vh - 64px);
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
 }
 
 .service-scale-canvas {
-  width: calc(100% / var(--service-scale, 1));
-  min-height: calc(100vh / var(--service-scale, 1));
-  zoom: var(--service-scale, 1);
-}
-
-@supports not (zoom: 1) {
-  .service-scale-canvas {
-    transform: scale(var(--service-scale, 1));
-    transform-origin: top center;
-  }
+  width: var(--service-design-width, 1565px);
+  min-height: var(--service-design-height, 1070px);
+  flex: 0 0 var(--service-design-width, 1565px);
+  transform: scale(var(--service-scale, 1));
+  transform-origin: top center;
 }
 
 button,
@@ -1450,14 +1465,7 @@ body,
 .home-page {
   min-height: calc(100vh - 64px);
   padding: 70px 6vw 52px;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.04) 0%,
-      rgba(255, 255, 255, 0.10) 44%,
-      rgba(255, 255, 255, 0.35) 100%
-    ),
-    url("/hero-bg.png") center top / cover no-repeat;
+  background: transparent;
 }
 
 .hero-section {
