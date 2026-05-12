@@ -79,6 +79,48 @@ function transformHistoryItem(item) {
   };
 }
 
+function sortHistoryByNewest(items) {
+  return [...items].sort((a, b) => {
+    const nextTime = new Date(b.createdAt).getTime();
+    const currentTime = new Date(a.createdAt).getTime();
+    const safeNextTime = Number.isFinite(nextTime) ? nextTime : 0;
+    const safeCurrentTime = Number.isFinite(currentTime) ? currentTime : 0;
+    return safeNextTime - safeCurrentTime;
+  });
+}
+
+function normalizeHistoryPage(historyData, page, size) {
+  const data = historyData || {};
+  const rawItems = Array.isArray(data) ? data : data.content || data.items || [];
+  const transformed = sortHistoryByNewest(rawItems.map(transformHistoryItem));
+  const hasServerPaging =
+    !Array.isArray(data) &&
+    (Array.isArray(data.content) ||
+      data.number !== undefined ||
+      data.totalPages !== undefined ||
+      data.totalElements !== undefined);
+
+  if (hasServerPaging) {
+    return {
+      items: transformed,
+      page: data.number ?? page,
+      totalPages: data.totalPages ?? (transformed.length > 0 ? 1 : 0),
+      totalElements: data.totalElements ?? transformed.length,
+    };
+  }
+
+  const totalElements = transformed.length;
+  const totalPages = Math.ceil(totalElements / size);
+  const safePage = Math.max(0, Math.min(page, Math.max(0, totalPages - 1)));
+
+  return {
+    items: transformed.slice(safePage * size, safePage * size + size),
+    page: safePage,
+    totalPages,
+    totalElements,
+  };
+}
+
 function Home() {
   const [result, setResult] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -91,6 +133,7 @@ function Home() {
   const [historyError, setHistoryError] = useState("");
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [analysisModalDismissed, setAnalysisModalDismissed] = useState(false);
+  const [inputResetSignal, setInputResetSignal] = useState(0);
 
   const handleAuthExpired = () => {
     clearAuth();
@@ -116,17 +159,13 @@ function Home() {
     setHistoryError("");
     return getHistory({ page, size: HISTORY_PAGE_SIZE })
       .then((data) => {
-        const items = data.content || data.items || [];
-        const transformed = items.map(transformHistoryItem);
-        const nextPage = data.number ?? page;
-        const nextTotalPages = data.totalPages ?? (transformed.length > 0 ? 1 : 0);
-        const nextTotalElements = data.totalElements ?? transformed.length;
+        const normalized = normalizeHistoryPage(data, page, HISTORY_PAGE_SIZE);
 
-        setHistory(transformed);
-        setHistoryPage(nextPage);
-        setHistoryTotalPages(nextTotalPages);
-        setHistoryTotalElements(nextTotalElements);
-        return { ok: true, items: transformed };
+        setHistory(normalized.items);
+        setHistoryPage(normalized.page);
+        setHistoryTotalPages(normalized.totalPages);
+        setHistoryTotalElements(normalized.totalElements);
+        return { ok: true, items: normalized.items };
       })
       .catch((error) => {
         if (isAuthError(error)) {
@@ -148,12 +187,11 @@ function Home() {
 
     getHistory({ page: 0, size: HISTORY_PAGE_SIZE })
       .then((data) => {
-        const items = data.content || data.items || [];
-        const transformed = items.map(transformHistoryItem);
-        setHistory(transformed);
-        setHistoryPage(data.number ?? 0);
-        setHistoryTotalPages(data.totalPages ?? (transformed.length > 0 ? 1 : 0));
-        setHistoryTotalElements(data.totalElements ?? transformed.length);
+        const normalized = normalizeHistoryPage(data, 0, HISTORY_PAGE_SIZE);
+        setHistory(normalized.items);
+        setHistoryPage(normalized.page);
+        setHistoryTotalPages(normalized.totalPages);
+        setHistoryTotalElements(normalized.totalElements);
       })
       .catch((error) => {
         if (isAuthError(error)) {
@@ -345,6 +383,15 @@ function Home() {
     }
   };
 
+  const handleNewAnalysis = () => {
+    setResult(null);
+    setSelectedHistoryId(null);
+    setResultSource("analysis");
+    setAnalysisModalDismissed(true);
+    setInputResetSignal((current) => current + 1);
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <main className="home-page">
       <section className="hero-section">
@@ -426,6 +473,7 @@ function Home() {
           setLoading={setLoading}
           onAnalysisComplete={handleAnalysisComplete}
           loggedIn={loggedIn}
+          resetSignal={inputResetSignal}
         />
       </section>
 
@@ -465,13 +513,7 @@ function Home() {
                   <ResultSection
                     result={result}
                     source={resultSource}
-                    onNewAnalysis={() => {
-                      setResult(null);
-                      setSelectedHistoryId(null);
-                      setResultSource("analysis");
-                      setAnalysisModalDismissed(true);
-                      window.scrollTo({ top: 0, behavior: "smooth" });
-                    }}
+                    onNewAnalysis={handleNewAnalysis}
                   />
                 </div>
               )
