@@ -18,37 +18,19 @@ body {
 }
 
 .service-scale-viewport {
+  position: relative;
+  width: 100vw;
   min-height: 100vh;
   overflow-x: hidden;
-  background:
-    linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.04) 0%,
-      rgba(255, 255, 255, 0.10) 44%,
-      rgba(255, 255, 255, 0.35) 100%
-    ),
-    url("/hero-bg.png") center top / cover no-repeat,
-    #f7f8fa;
-  display: flex;
-  flex-direction: column;
-  justify-content: flex-start;
-  align-items: stretch;
-}
-
-.service-scale-stage {
-  width: 100%;
-  min-height: calc(100vh - 64px);
-  display: flex;
-  justify-content: center;
-  align-items: flex-start;
+  background: #f7f8fa;
 }
 
 .service-scale-canvas {
-  width: var(--service-design-width, 1565px);
-  min-height: var(--service-design-height, 1070px);
-  flex: 0 0 var(--service-design-width, 1565px);
-  transform: scale(var(--service-scale, 1));
-  transform-origin: top center;
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2048px;
+  transform-origin: top left;
 }
 
 button,
@@ -1428,29 +1410,30 @@ body,
 }
 
 .service-topbar {
-  height: 64px;
-  padding: 0 28px;
+  height: 76px;
+  padding: 0 32px;
   background: rgba(248, 250, 252, 0.9);
   backdrop-filter: blur(12px);
   border-bottom: 1px solid rgba(226, 232, 240, 0.75);
 }
 
 .service-logo {
-  font-size: 21px;
+  font-size: 24px;
   letter-spacing: -0.04em;
 }
 
 .service-user-text {
-  font-size: 13px;
+  font-size: 15px;
   color: #8a94a6;
 }
 
 .service-secondary-link,
 .service-secondary-button,
 .service-logout-button {
-  height: 38px;
-  border-radius: 13px;
-  font-size: 14px;
+  height: 44px;
+  padding: 0 18px;
+  border-radius: 14px;
+  font-size: 15px;
 }
 
 .service-secondary-link,
@@ -1463,9 +1446,16 @@ body,
 }
 
 .home-page {
-  min-height: calc(100vh - 64px);
+  min-height: calc(100vh - 76px);
   padding: 70px 6vw 52px;
-  background: transparent;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.04) 0%,
+      rgba(255, 255, 255, 0.10) 44%,
+      rgba(255, 255, 255, 0.35) 100%
+    ),
+    url("/hero-bg.png") center top / cover no-repeat;
 }
 
 .hero-section {
