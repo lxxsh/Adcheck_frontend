@@ -17,6 +17,22 @@ body {
   min-height: 100vh;
 }
 
+.service-scale-viewport {
+  position: relative;
+  width: 100vw;
+  min-height: 100vh;
+  overflow-x: hidden;
+  background: #f7f8fa;
+}
+
+.service-scale-canvas {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 2048px;
+  transform-origin: top left;
+}
+
 button,
 input,
 textarea {
