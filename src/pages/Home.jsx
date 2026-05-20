@@ -17,7 +17,7 @@ const HISTORY_PAGE_SIZE = 5;
 const LOADING_MESSAGES = [
   "문구를 분석하고 있습니다.",
   "광고 표현의 위험도를 계산하고 있습니다.",
-  "어디까지나 위험도 분석일 뿐, 구매를 막으려는 판단은 아닙니다.",
+  "어디까지가 과장인지 분석할 근거를 모으고 있습니다.",
   "의심되는 표현과 근거를 정리하고 있습니다.",
 ];
 
@@ -134,6 +134,7 @@ function Home() {
   const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
   const [analysisModalDismissed, setAnalysisModalDismissed] = useState(false);
   const [inputResetSignal, setInputResetSignal] = useState(0);
+  const [analysisCancelSignal, setAnalysisCancelSignal] = useState(0);
 
   const handleAuthExpired = () => {
     clearAuth();
@@ -142,7 +143,7 @@ function Home() {
     setHistoryTotalPages(0);
     setHistoryTotalElements(0);
     setSelectedHistoryId(null);
-    setHistoryError("로그인이 만료되었습니다. 다시 로그인하면 분석 기록이 저장됩니다.");
+    setHistoryError("로그인이 만료되었습니다. 다시 로그인하면 분석 기록을 저장할 수 있습니다.");
   };
 
   const refreshHistory = (page = historyPage) => {
@@ -367,6 +368,13 @@ function Home() {
     setAnalysisModalDismissed(false);
   };
 
+  const handleAnalysisStart = () => {
+    setResult(null);
+    setResultSource("analysis");
+    setSelectedHistoryId(null);
+    setAnalysisModalDismissed(false);
+  };
+
   const handleHistoryPageChange = (page) => {
     if (page < 0 || page >= historyTotalPages || page === historyPage) return;
     refreshHistory(page);
@@ -376,11 +384,16 @@ function Home() {
   const showAnalysisModal = (loading || result) && !analysisModalDismissed;
   const closeAnalysisModal = () => {
     setAnalysisModalDismissed(true);
-    if (!loading) {
+    if (loading) {
+      setAnalysisCancelSignal((current) => current + 1);
+      setLoading(false);
       setResult(null);
-      setSelectedHistoryId(null);
       setResultSource("analysis");
+      return;
     }
+    setResult(null);
+    setSelectedHistoryId(null);
+    setResultSource("analysis");
   };
 
   const handleNewAnalysis = () => {
@@ -399,23 +412,23 @@ function Home() {
           <div className="hero-badge">AI가 광고의 진실을 밝혀드립니다</div>
 
           <h1 className="hero-title">
-            허위·과장 광고 의심도를<br />
-            더 <span>정확하게 분석</span>하세요
+            허위과장 광고 의심도를<br />
+            <span>정확하게 분석</span>하세요
           </h1>
 
           <p className="hero-description">
-            광고 문구, URL, 이미지 입력을 통해 허위·과장 가능성이 있는 <span className="text-nowrap">표현을 탐지하고,</span>
-            그 의심스러운 근거를 함께 확인할 수 있습니다.
+            광고 문구, URL, 이미지를 입력해 허위과장 가능성이 있는 <span className="text-nowrap">표현을 찾아내고,</span>
+            그 의심도와 근거를 함께 확인할 수 있습니다.
           </p>
 
           <div className="feature-row">
             <div className="feature-item">
               <strong>AI 기반 분석</strong>
-              <small>자연어 · 이미지 분석</small>
+              <small>자연어와 이미지 분석</small>
             </div>
             <div className="feature-item">
               <strong>의심 근거 제시</strong>
-              <small>과장 · 허위 근거 제공</small>
+              <small>과장 및 허위 근거 제공</small>
             </div>
             <div className="feature-item">
               <strong>직관적 위험도</strong>
@@ -451,11 +464,11 @@ function Home() {
           </div>
 
           <div className="risk-card result-card">
-            <p>주요 탐지 결과</p>
+            <p>주요 감지 결과</p>
             <ul>
-              <li><span className="dot red"></span>과장 표현 <b>근거 보기 ›</b></li>
-              <li><span className="dot orange"></span>근거 부족 <b>근거 보기 ›</b></li>
-              <li><span className="dot purple"></span>사실 확인 필요 <b>근거 보기 ›</b></li>
+              <li><span className="dot red"></span>과장 표현 <b>근거 보기</b></li>
+              <li><span className="dot orange"></span>근거 부족 <b>근거 보기</b></li>
+              <li><span className="dot purple"></span>사실 확인 필요 <b>근거 보기</b></li>
             </ul>
           </div>
 
@@ -472,8 +485,10 @@ function Home() {
           setResult={handleInputResult}
           setLoading={setLoading}
           onAnalysisComplete={handleAnalysisComplete}
+          onAnalysisStart={handleAnalysisStart}
           loggedIn={loggedIn}
           resetSignal={inputResetSignal}
+          cancelSignal={analysisCancelSignal}
         />
       </section>
 
@@ -491,7 +506,7 @@ function Home() {
               onClick={closeAnalysisModal}
               aria-label="닫기"
             >
-              ×
+              X
             </button>
 
             {loading ? (

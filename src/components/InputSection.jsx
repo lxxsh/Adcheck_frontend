@@ -64,9 +64,9 @@ function combineImageResponses(results, images) {
     summary:
       images.length === 1
         ? results[0]?.summary || "이미지 분석 결과입니다."
-        : `${images.length}장의 이미지를 모두 분석했습니다. ${
+        : `${images.length}개의 이미지를 모두 분석했습니다. ${
             riskyCount > 0
-              ? `${riskyCount}장에서 주의 또는 의심 표현이 감지되었습니다.`
+              ? `${riskyCount}개에서 주의 또는 의심 표현이 감지되었습니다.`
               : "모든 이미지가 비교적 안전한 표현으로 분류되었습니다."
           }`,
   };
@@ -76,8 +76,10 @@ function InputSection({
   setResult,
   setLoading,
   onAnalysisComplete,
+  onAnalysisStart,
   loggedIn,
   resetSignal,
+  cancelSignal,
 }) {
   const [activeTab, setActiveTab] = useState("compose");
   const [textInput, setTextInput] = useState("");
@@ -85,6 +87,8 @@ function InputSection({
   const [images, setImages] = useState([]);
   const [error, setError] = useState("");
   const imagesRef = useRef([]);
+  const abortControllerRef = useRef(null);
+  const requestSequenceRef = useRef(0);
 
   useEffect(() => {
     imagesRef.current = images;
@@ -92,11 +96,16 @@ function InputSection({
 
   useEffect(() => {
     return () => {
+      abortControllerRef.current?.abort();
       imagesRef.current.forEach((image) => URL.revokeObjectURL(image.preview));
     };
   }, []);
 
   useEffect(() => {
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    requestSequenceRef.current += 1;
+    setLoading(false);
     imagesRef.current.forEach((image) => URL.revokeObjectURL(image.preview));
     imagesRef.current = [];
     setImages([]);
@@ -104,7 +113,15 @@ function InputSection({
     setUrlInput("");
     setError("");
     setActiveTab("compose");
-  }, [resetSignal]);
+  }, [resetSignal, setLoading]);
+
+  useEffect(() => {
+    if (!cancelSignal) return;
+    abortControllerRef.current?.abort();
+    abortControllerRef.current = null;
+    requestSequenceRef.current += 1;
+    setLoading(false);
+  }, [cancelSignal, setLoading]);
 
   const hasImages = useMemo(() => images.length > 0, [images]);
 
@@ -169,37 +186,49 @@ function InputSection({
   };
 
   const handleAnalyze = async () => {
+    const requestId = requestSequenceRef.current + 1;
+
     try {
       setError("");
 
       if (activeTab === "url" && !urlInput.trim()) {
-        setError("광고 URL을 입력해주세요.");
+        setError("광고 URL을 입력해 주세요.");
         return;
       }
 
       if (activeTab === "compose" && !textInput.trim() && !hasImages) {
-        setError("광고 문구를 입력하거나 이미지를 업로드해주세요.");
+        setError("광고 문구를 입력하거나 이미지를 업로드해 주세요.");
         return;
       }
 
       if (activeTab === "compose" && textInput.trim() && hasImages) {
-        setError("문구와 이미지는 동시에 분석할 수 없습니다. 하나만 선택해주세요.");
+        setError("문구와 이미지는 동시에 분석할 수 없습니다. 하나만 선택해 주세요.");
         return;
       }
 
+      abortControllerRef.current?.abort();
+      const controller = new AbortController();
+      abortControllerRef.current = controller;
+      requestSequenceRef.current = requestId;
+
+      onAnalysisStart?.();
       setLoading(true);
 
       let response;
 
       if (activeTab === "url") {
-        response = await analyzeUrl(urlInput.trim());
+        response = await analyzeUrl(urlInput.trim(), { signal: controller.signal });
       } else if (hasImages) {
         const imageResponses = await Promise.all(
-          images.map((image) => analyzeImage(image.file))
+          images.map((image) => analyzeImage(image.file, { signal: controller.signal }))
         );
         response = combineImageResponses(imageResponses, images);
       } else {
-        response = await analyzeText(textInput.trim());
+        response = await analyzeText(textInput.trim(), { signal: controller.signal });
+      }
+
+      if (requestSequenceRef.current !== requestId || controller.signal.aborted) {
+        return;
       }
 
       const transformed = transformResult(response);
@@ -216,9 +245,15 @@ function InputSection({
         });
       }
     } catch (err) {
+      if (err?.name === "AbortError") {
+        return;
+      }
       setError(err.message || "분석 중 오류가 발생했습니다.");
     } finally {
-      setLoading(false);
+      if (requestSequenceRef.current === requestId) {
+        abortControllerRef.current = null;
+        setLoading(false);
+      }
     }
   };
 
@@ -235,7 +270,7 @@ function InputSection({
             placeholder="https://example.com/product"
           />
           <div className="input-hint">
-            상세 페이지나 광고 랜딩 페이지 주소를 입력해주세요.
+            상품 상세 페이지나 광고 랜딩 페이지 주소를 입력해 주세요.
           </div>
         </div>
       );
@@ -248,7 +283,7 @@ function InputSection({
           className="text-area compose-text-area"
           value={textInput}
           onChange={(event) => setTextInput(event.target.value)}
-          placeholder="광고 문구를 입력하거나 클립보드의 이미지를 Ctrl+V로 바로 붙여넣어 보세요."
+          placeholder="광고 문구를 입력하거나 클립보드의 이미지를 Ctrl+V로 바로 붙여 넣어 보세요."
           rows={6}
         />
 
@@ -285,8 +320,7 @@ function InputSection({
               <div className="image-gallery-header">
                 <div className="image-gallery-title">{`첨부된 이미지 ${images.length}장`}</div>
                 <div className="image-gallery-hint">
-                  첨부된 이미지는 모두 분석됩니다. 붙여넣기나 추가 선택으로 계속 누적할 수
-                  있습니다.
+                  첨부된 이미지는 모두 분석됩니다. 붙여넣기나 추가 선택으로 계속 누적할 수 있습니다.
                 </div>
               </div>
 
@@ -321,18 +355,17 @@ function InputSection({
             <>
               <div className="upload-icon">+</div>
               <div className="upload-text">
-                이미지를 올려서 업로드하거나 클립보드에서 바로 붙여넣으세요
+                이미지를 드래그해 업로드하거나 클립보드에서 바로 붙여 넣으세요
               </div>
               <div className="upload-subtext">
-                JPG, PNG 여러 장 선택 가능, 캡처 후 Ctrl+V 붙여넣기도 지원합니다
+                JPG, PNG 파일을 지원합니다. 캡처 후 Ctrl+V 붙여넣기도 가능합니다
               </div>
             </>
           )}
         </div>
 
         <div className="input-hint">
-          문구를 입력하면 문구 분석, 이미지를 첨부하면 첨부한 이미지 전체를 순서대로
-          분석합니다.
+          문구를 입력하면 문구 분석, 이미지를 첨부하면 첨부된 이미지 전체를 순서대로 분석합니다.
         </div>
       </div>
     );
@@ -348,7 +381,7 @@ function InputSection({
         <div className="section-chip">
           {loggedIn
             ? "분석 기록 자동 저장"
-            : "비회원 분석 가능 · 로그인 시 기록 저장"}
+            : "비회원 분석 가능, 로그인 시 기록 저장"}
         </div>
       </div>
 

@@ -127,11 +127,13 @@ export function isLoggedIn() {
   return !!localStorage.getItem("token");
 }
 
-export async function analyzeText(content) {
+export async function analyzeText(content, options = {}) {
+  const { signal } = options;
   const request = (headers) => fetch(`${BASE_URL}/analyze/text`, {
     method: "POST",
     credentials: "omit",
     headers,
+    signal,
     body: JSON.stringify({
       inputType: "text",
       content,
@@ -152,11 +154,13 @@ export async function analyzeText(content) {
   return handleResponse(res);
 }
 
-export async function analyzeUrl(content) {
+export async function analyzeUrl(content, options = {}) {
+  const { signal } = options;
   const request = (headers) => fetch(`${BASE_URL}/analyze/url`, {
     method: "POST",
     credentials: "omit",
     headers,
+    signal,
     body: JSON.stringify({
       inputType: "url",
       content,
@@ -177,7 +181,8 @@ export async function analyzeUrl(content) {
   return handleResponse(res);
 }
 
-export async function analyzeImage(file) {
+export async function analyzeImage(file, options = {}) {
+  const { signal } = options;
   const formData = new FormData();
   formData.append("file", file);
   formData.append("inputType", "image");
@@ -186,6 +191,7 @@ export async function analyzeImage(file) {
     method: "POST",
     credentials: "omit",
     headers,
+    signal,
     body: formData,
   });
 
