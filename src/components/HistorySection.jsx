@@ -9,14 +9,12 @@ function getStatusClass(label) {
 
 function getInputTypeText(inputType) {
   if (inputType === "text") return "문구";
-  if (inputType === "url") return "URL";
   if (inputType === "image") return "이미지";
   return "기타";
 }
 
 function getPreviewLabel(inputType) {
   if (inputType === "image") return "추출 문구";
-  if (inputType === "url") return "분석 URL";
   return "분석 문구";
 }
 

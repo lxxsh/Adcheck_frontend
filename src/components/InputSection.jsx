@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react";
-import { analyzeImage, analyzeText, analyzeUrl } from "../api";
+import { analyzeImage, analyzeText } from "../api";
 import { transformResult } from "../utils/transform";
 
 const LABEL_SAFE = "정상";
@@ -83,7 +83,6 @@ function InputSection({
 }) {
   const [activeTab, setActiveTab] = useState("compose");
   const [textInput, setTextInput] = useState("");
-  const [urlInput, setUrlInput] = useState("");
   const [images, setImages] = useState([]);
   const [error, setError] = useState("");
   const imagesRef = useRef([]);
@@ -110,7 +109,6 @@ function InputSection({
     imagesRef.current = [];
     setImages([]);
     setTextInput("");
-    setUrlInput("");
     setError("");
     setActiveTab("compose");
   }, [resetSignal, setLoading]);
@@ -152,8 +150,6 @@ function InputSection({
   };
 
   const getInputValue = () => {
-    if (activeTab === "url") return urlInput.trim();
-
     if (hasImages) {
       return images.length > 1
         ? `${images[0].displayName} +${images.length - 1} more`
@@ -163,10 +159,7 @@ function InputSection({
     return textInput.trim();
   };
 
-  const getHistoryInputType = () => {
-    if (activeTab === "url") return "url";
-    return hasImages ? "image" : "text";
-  };
+  const getHistoryInputType = () => (hasImages ? "image" : "text");
 
   const handleFileChange = (event) => {
     appendImages(Array.from(event.target.files || []));
@@ -191,11 +184,6 @@ function InputSection({
     try {
       setError("");
 
-      if (activeTab === "url" && !urlInput.trim()) {
-        setError("광고 URL을 입력해 주세요.");
-        return;
-      }
-
       if (activeTab === "compose" && !textInput.trim() && !hasImages) {
         setError("광고 문구를 입력하거나 이미지를 업로드해 주세요.");
         return;
@@ -216,9 +204,7 @@ function InputSection({
 
       let response;
 
-      if (activeTab === "url") {
-        response = await analyzeUrl(urlInput.trim(), { signal: controller.signal });
-      } else if (hasImages) {
+      if (hasImages) {
         const imageResponses = await Promise.all(
           images.map((image) => analyzeImage(image.file, { signal: controller.signal }))
         );
@@ -258,24 +244,6 @@ function InputSection({
   };
 
   const renderTabContent = () => {
-    if (activeTab === "url") {
-      return (
-        <div className="input-panel">
-          <label className="input-label">광고 URL 입력</label>
-          <input
-            className="text-input"
-            type="text"
-            value={urlInput}
-            onChange={(event) => setUrlInput(event.target.value)}
-            placeholder="https://example.com/product"
-          />
-          <div className="input-hint">
-            상품 상세 페이지나 광고 랜딩 페이지 주소를 입력해 주세요.
-          </div>
-        </div>
-      );
-    }
-
     return (
       <div className="input-panel compose-panel" onPaste={handleClipboardPaste}>
         <label className="input-label">광고 문구 또는 이미지</label>
@@ -391,12 +359,6 @@ function InputSection({
           onClick={() => setActiveTab("compose")}
         >
           문구/이미지 입력
-        </button>
-        <button
-          className={`tab-button ${activeTab === "url" ? "active" : ""}`}
-          onClick={() => setActiveTab("url")}
-        >
-          URL 입력
         </button>
       </div>
 

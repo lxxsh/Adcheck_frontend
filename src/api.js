@@ -154,33 +154,6 @@ export async function analyzeText(content, options = {}) {
   return handleResponse(res);
 }
 
-export async function analyzeUrl(content, options = {}) {
-  const { signal } = options;
-  const request = (headers) => fetch(`${BASE_URL}/analyze/url`, {
-    method: "POST",
-    credentials: "omit",
-    headers,
-    signal,
-    body: JSON.stringify({
-      inputType: "url",
-      content,
-    }),
-  });
-
-  let res = await request(authHeaders({
-      "Content-Type": "application/json",
-    }));
-
-  if (res.status === 401 || res.status === 403) {
-    clearAuth();
-    res = await request(publicHeaders({
-      "Content-Type": "application/json",
-    }));
-  }
-
-  return handleResponse(res);
-}
-
 export async function analyzeImage(file, options = {}) {
   const { signal } = options;
   const formData = new FormData();

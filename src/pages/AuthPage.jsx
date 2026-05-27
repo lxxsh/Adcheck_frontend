@@ -170,14 +170,14 @@ function AuthPage() {
               더 명확하게 확인하세요
             </h1>
             <p className="auth-brand-description">
-              광고 문구, URL, 이미지를 입력하면 허위·과장 가능성이 있는 표현을
+              광고 문구와 이미지를 입력하면 허위·과장 가능성이 있는 표현을
               찾아주고 그 근거를 함께 보여주는 분석 서비스입니다.
             </p>
 
             <div className="auth-feature-list">
               <div className="auth-feature-item">
                 <span className="auth-feature-dot"></span>
-                광고 문구, URL, 이미지 분석 지원
+                광고 문구, 이미지 분석 지원
               </div>
               <div className="auth-feature-item">
                 <span className="auth-feature-dot"></span>

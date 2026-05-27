@@ -417,7 +417,7 @@ function Home() {
           </h1>
 
           <p className="hero-description">
-            광고 문구, URL, 이미지를 입력해 허위과장 가능성이 있는 <span className="text-nowrap">표현을 찾아내고,</span>
+            광고 문구와 이미지를 입력해 허위과장 가능성이 있는 <span className="text-nowrap">표현을 찾아내고,</span>
             그 의심도와 근거를 함께 확인할 수 있습니다.
           </p>
 
