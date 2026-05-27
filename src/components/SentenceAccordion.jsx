@@ -18,7 +18,7 @@ function SentenceAccordion({ data }) {
           <span className={`status-pill ${statusClass}`}>{data.label}</span>
           <span className="sentence-text">{data.text}</span>
         </div>
-        <span className={`accordion-arrow ${open ? "rotate" : ""}`}>⌄</span>
+        <span className={`accordion-arrow ${open ? "rotate" : ""}`}>^</span>
       </button>
 
       {open && (
@@ -33,35 +33,18 @@ function SentenceAccordion({ data }) {
             <p>{data.detail}</p>
           </div>
 
-          <div className="detail-meta-row">
-            <div className="meta-box">
-              <div className="detail-title small">키워드</div>
-              <div className="tag-list">
-                {data.keywords.length > 0 ? (
-                  data.keywords.map((keyword, index) => (
-                    <span key={index} className="meta-tag">
-                      {keyword}
-                    </span>
-                  ))
-                ) : (
-                  <span className="meta-tag">키워드 없음</span>
-                )}
-              </div>
-            </div>
-
-            <div className="meta-box">
-              <div className="detail-title small">탐지 규칙</div>
-              <div className="tag-list">
-                {data.rules.length > 0 ? (
-                  data.rules.map((rule, index) => (
-                    <span key={index} className="meta-tag outline">
-                      {rule}
-                    </span>
-                  ))
-                ) : (
-                  <span className="meta-tag outline">규칙 정보 없음</span>
-                )}
-              </div>
+          <div className="meta-box">
+            <div className="detail-title small">키워드</div>
+            <div className="tag-list">
+              {data.keywords.length > 0 ? (
+                data.keywords.map((keyword, index) => (
+                  <span key={index} className="meta-tag">
+                    {keyword}
+                  </span>
+                ))
+              ) : (
+                <span className="meta-tag">키워드 없음</span>
+              )}
             </div>
           </div>
         </div>
